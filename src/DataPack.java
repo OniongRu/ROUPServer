@@ -26,6 +26,17 @@ public class DataPack {
         programs = new ArrayList<>();
     }
 
+    public DataPack(String userName)
+    {
+        this.userName = userName;
+    }
+
+    public DataPack(String userName, ArrayList<ProgramClass> programs)
+    {
+        this.userName = userName;
+        this.programs = programs;
+    }
+
     public void print() {
         System.out.println("Name: " + userName);
         for (ProgramClass pc : programs) {
