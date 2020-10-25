@@ -14,25 +14,13 @@ public class ResourceUsage {
     {
         return threadAmount;
     }
-    public void set_threadAmount(int threadAmount)
-    {
-        this.threadAmount = threadAmount;
-    }
     public double get_cpuUsage()
     {
         return cpuUsage;
     }
-    public void set_cpuUsage(double cpuUsage)
-    {
-        this.cpuUsage = cpuUsage;
-    }
     public long get_ramUsage ()
     {
         return ramUsage;
-    }
-    public void set_ramUsage (long ramUsage)
-    {
-        this.ramUsage = ramUsage;
     }
 
 }

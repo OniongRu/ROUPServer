@@ -1,17 +1,34 @@
 import java.util.ArrayList;
 
-public class DataPack {//Class which contains gets and contains info about program
-    public String userName;
-    public ArrayList<ProgramClass>  programs;//list of programs
+//Class which contains gets and contains info about program
+//Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
+public class DataPack {
+    private String userName;
 
-    public DataPack()//this is Constructor👍🏻
-    {
-        programs =new ArrayList<>();
+    //list of programs
+    private ArrayList<ProgramClass> programs;
+
+    public String getUserName() {
+        return userName;
     }
-    public void print()
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public ArrayList<ProgramClass> getPrograms() {
+        return programs;
+    }
+
+    //this is Constructor👍🏻
+    public DataPack()
     {
-        System.out.println("Name: "+userName);
-        for (ProgramClass pc:programs ) {
+        programs = new ArrayList<>();
+    }
+
+    public void print() {
+        System.out.println("Name: " + userName);
+        for (ProgramClass pc : programs) {
             pc.print();
         }
     }
