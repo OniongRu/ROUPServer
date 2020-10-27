@@ -1,3 +1,5 @@
+package dataRecieve;
+
 import java.util.ArrayList;
 
 //Class which contains gets and contains info about program
