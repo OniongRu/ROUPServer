@@ -1,5 +1,7 @@
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+package databaseInteract;
+
+import databaseInteract.ResourceUsage;
+
 import java.util.Date;
 
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64

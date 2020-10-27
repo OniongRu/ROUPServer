@@ -1,3 +1,5 @@
+package dataRecieve;
+
 import com.google.gson.Gson;
 
 import java.io.*;
@@ -56,7 +58,7 @@ public class ClientGroup extends Thread{
         }
     }
 
-    //приём json-а от клиента и преобразование в объекта DataPack
+    //приём json-а от клиента и преобразование в объекта dataRecieve.DataPack
     private static void takeGson(SelectionKey key)
     {
         try {
