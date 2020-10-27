@@ -1,3 +1,5 @@
+package databaseInteract;
+
 public class ResourceUsage {
     private int threadAmount;
     private double cpuUsage;
@@ -9,7 +11,6 @@ public class ResourceUsage {
         this.ramUsage = ramUsage;
     }
 
-    //эту хрень нижнюю нужно для всех файлов классов?
     public int get_threadAmount()
     {
         return threadAmount;
