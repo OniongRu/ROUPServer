@@ -1,17 +1,23 @@
 package dataRecieve;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 //Class which contains gets and contains info about program
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class DataPack {
     private String userName;
+    Date date;
 
     //list of programs
     private ArrayList<ProgramClass> programs;
 
+
     public String getUserName() {
         return userName;
+    }
+
+    public Date getDate() {        return date;
     }
 
     public void setUserName(String userName) {
@@ -33,13 +39,15 @@ public class DataPack {
         this.userName = userName;
     }
 
-    public DataPack(String userName, ArrayList<ProgramClass> programs)
+    public DataPack(String userName,Date date, ArrayList<ProgramClass> programs)
     {
         this.userName = userName;
+        this.date=date;
         this.programs = programs;
     }
 
     public void print() {
+        System.out.println("Date: " + date);
         System.out.println("Name: " + userName);
         for (ProgramClass pc : programs) {
             pc.print();

@@ -1,6 +1,9 @@
 package databaseInteract;
 
+import dataRecieve.ProgramClass;
+
 import java.util.ArrayList;
+import java.util.Date;
 
 //In construction. Not working yet
 public class User {
@@ -30,5 +33,15 @@ public class User {
         this.login = login;
         this.password = password;
         this.Programs = Programs;
+    }
+
+    public void addInfoAboutPrograms(Date date,ProgramClass program){
+        for(Program prog: Programs)
+        {
+            if(prog.getName().equals(program.getName())){
+                prog.addNewProgram(date,program);
+            }
+        }
+
     }
 }
