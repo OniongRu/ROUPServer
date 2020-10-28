@@ -13,8 +13,12 @@ public class DataPack {
     //list of programs
     private ArrayList<ProgramClass> programs;
 
+
     public String getUserName() {
         return userName;
+    }
+
+    public Date getDate() {        return date;
     }
 
     public void setUserName(String userName) {
@@ -36,9 +40,10 @@ public class DataPack {
         this.userName = userName;
     }
 
-    public DataPack(String userName, ArrayList<ProgramClass> programs)
+    public DataPack(String userName,Date date, ArrayList<ProgramClass> programs)
     {
         this.userName = userName;
+        this.date=date;
         this.programs = programs;
     }
 

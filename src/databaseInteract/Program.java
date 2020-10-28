@@ -1,14 +1,35 @@
 package databaseInteract;
 
-import java.util.ArrayList;
+
+import dataRecieve.DataPack;
+import dataRecieve.ProgramClass;
+
+import java.util.Date;
+import java.util.HashMap;
 
 //In construction. Not working yet
 public class Program {
-    private int ID;
+    private long ID;
     private String name;
-    private ArrayList<HourInf> HourWork;
+    private HashMap<Date,HourInf> HourWork;
 
-    public int getID() {
+    public HashMap<Date, HourInf> getHourWork() {        return HourWork;
+    }
+
+    public void addNewProgram(Date date, ProgramClass programClass)
+    {
+      date.setMinutes(0);
+        date.setSeconds(0);
+        if(!HourWork.containsKey(date)){
+            HourWork.put(date,new HourInf());
+        }
+        this.name=programClass.getName();
+        this.ID=programClass.getID();
+        HourWork.get(date).AddNewProgram(programClass);
+    }
+
+
+    public long getID() {
         return ID;
     }
 
@@ -16,14 +37,12 @@ public class Program {
         return name;
     }
 
-    public ArrayList<HourInf> getHourWork() {
-        return HourWork;
-    }
 
-    public Program(int ID, String name, ArrayList<HourInf> HourWork)
+    public Program(int ID, String name)
     {
         this.ID = ID;
         this.name = name;
-        this.HourWork = HourWork;
+        this.HourWork = new HashMap<>();
     }
+
 }
