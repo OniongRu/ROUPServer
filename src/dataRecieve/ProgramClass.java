@@ -1,5 +1,7 @@
 package dataRecieve;
 
+import java.text.SimpleDateFormat;
+
 public class ProgramClass {//class which contains info about program
     private String name;
     private long ID;
