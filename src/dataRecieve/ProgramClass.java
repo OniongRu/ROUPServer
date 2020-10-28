@@ -1,6 +1,6 @@
 package dataRecieve;
 
-import java.io.ObjectInputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ProgramClass {//class which contains info about program
