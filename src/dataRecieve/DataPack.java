@@ -18,7 +18,7 @@ public class DataPack {
         return userName;
     }
 
-    public Date getDate() {        return date;
+    public Date getDate() {        return creationDate;
     }
 
     public void setUserName(String userName) {
@@ -40,10 +40,10 @@ public class DataPack {
         this.userName = userName;
     }
 
-    public DataPack(String userName,Date date, ArrayList<ProgramClass> programs)
+    public DataPack(String userName, Date creationDate, ArrayList<ProgramClass> programs)
     {
         this.userName = userName;
-        this.date=date;
+        this.creationDate = creationDate;
         this.programs = programs;
     }
 
