@@ -7,6 +7,7 @@ import java.util.Date;
 
 //In construction. Not working yet
 public class User {
+    private int ID;
     private String name;
     private String login;
     private String password;
@@ -27,6 +28,10 @@ public class User {
     public ArrayList<Program> getPrograms() {
         return Programs;
     }
+
+    public void setID(int id) {ID=id;}
+
+    public int getID() {return ID;}
 
     public User(String name, String login, String password, ArrayList<Program> Programs) {
         this.name = name;
