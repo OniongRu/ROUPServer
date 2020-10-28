@@ -122,7 +122,6 @@ public class Server {
                 serverList.get(ThreadVar).AddSocket(ClientS); // регистрация входящего соединения в селекторе одного из объекта 
                 ThreadVar = (ThreadVar + 1) % 2;
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }

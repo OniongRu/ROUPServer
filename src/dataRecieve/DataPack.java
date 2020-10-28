@@ -9,6 +9,7 @@ public class DataPack {
     private String userName;
     Date date;
 
+    private String activeWindow;
     //list of programs
     private ArrayList<ProgramClass> programs;
 
@@ -49,6 +50,7 @@ public class DataPack {
     public void print() {
         System.out.println("Date: " + date);
         System.out.println("Name: " + userName);
+        System.out.println("Active window: " + activeWindow);
         for (ProgramClass pc : programs) {
             pc.print();
         }
