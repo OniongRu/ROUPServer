@@ -1,3 +1,4 @@
+import DBManager.DBManager;
 import dataRecieve.ClientGroup;
 import databaseInteract.*;
 import dataRecieve.*;
@@ -7,6 +8,7 @@ import java.net.*;
 import java.lang.*;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.sql.SQLException;
 import java.util.*;
 
 //класс сервер принимает входящие соединения и назначает
@@ -108,24 +110,35 @@ public class Server {
 
     public static void main(String[] args) {
         try {
+            DBManager manager = new DBManager();
+
+            Program program = new Program(0, "Minecraft");//(new Date(0), new ProgramClass("Minecraft", 0, 1, 5, 100, new Date(100000)));
+            manager.addUser(new User("Goose", "GooseLogin", "GeeseTheBest", new ArrayList<Program>()));
+            manager.addProgram(program, 0);
+        }
+        catch(SQLException e)
+        {
+            e.printStackTrace();
+        }/*
+        try {
             System.out.println("♂Server start♂");
             ServerSocketChannel ServerS = ServerSocketChannel.open();
             ServerS.bind(new InetSocketAddress(PORT));
             SocketChannel ClientS1 = ServerS.accept(); // ожидание входящего соединения
             serverList.add(new ClientGroup(ClientS1, PORT,dataPackQueue)); //инициализаия 1ого объекта
-            ClientS1 = ServerS.accept(); // ожидание входящего соединения 
+            ClientS1 = ServerS.accept(); // ожидание входящего соединения
             serverList.add(new ClientGroup(ClientS1, PORT,dataPackQueue)); //инициализаия 2ого объекта
             int ThreadVar = 0;
             while (true) {
                 SocketChannel ClientS = ServerS.accept();
                 ClientS.configureBlocking(false);
-                serverList.get(ThreadVar).AddSocket(ClientS); // регистрация входящего соединения в селекторе одного из объекта 
+                serverList.get(ThreadVar).AddSocket(ClientS); // регистрация входящего соединения в селекторе одного из объекта
                 ThreadVar = (ThreadVar + 1) % 2;
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
 
     }
 }

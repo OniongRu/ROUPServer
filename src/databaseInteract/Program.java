@@ -13,7 +13,8 @@ public class Program {
     private String name;
     private HashMap<Date,HourInf> HourWork;
 
-    public HashMap<Date, HourInf> getHourWork() {        return HourWork;
+    public HashMap<Date, HourInf> getHourWork() {
+        return HourWork;
     }
 
     public void addNewProgram(Date date, ProgramClass programClass)
@@ -23,8 +24,8 @@ public class Program {
         if(!HourWork.containsKey(date)){
             HourWork.put(date,new HourInf());
         }
-        this.name=programClass.getName();
-        this.ID=programClass.getID();
+        this.name = programClass.getName();
+        this.ID = programClass.getID();
         HourWork.get(date).AddNewProgram(programClass);
     }
 

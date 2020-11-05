@@ -17,21 +17,17 @@ import java.util.Properties;
 
 public class DBManager {
 
-    private final Connection conn;
+    private Connection conn;
 
     public DBManager() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-            try (Connection conn = getConnection()) {
-
-                System.out.println("Connection to Store DB succesfull!");
-
-            }
+            conn = getConnection();
+            System.out.println("Connection to Store DB successful!");
         } catch (Exception ex) {
             System.out.println("Connection failed...");
             System.out.println(ex);
         }
-        conn = null;
     }
 
     public void addUser(User user) throws SQLException {
@@ -42,7 +38,7 @@ public class DBManager {
         System.out.printf("Added %d rows", rows);
     }
 
-    public void addProgramm(Program program, int id) throws SQLException {
+    public void addProgram(Program program, int id) throws SQLException {
         Statement statement = conn.createStatement();
         int rows = statement.executeUpdate(String.format(
                 "INSERT programm (program_name, user_id) VALUES (%s, %d)"
