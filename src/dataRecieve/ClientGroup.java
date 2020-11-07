@@ -18,8 +18,24 @@ import java.util.Stack;
 public class ClientGroup extends Thread{
     public Selector SelectorS;
     int PORT;
+    private int clientAm = 0;
+    private Queue<DataPack> dataPackQueue;
 
-    private static Queue<DataPack> dataPackQueue;
+    private void incrementCnt(){
+        clientAm++;
+    }
+
+    private void decrementCnt(){
+        clientAm--;
+    }
+
+    private void resetCnt(){
+        clientAm = 0;
+    }
+
+    public int getClientAm(){
+        return clientAm;
+    }
 
     //конструктор
     public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws IOException {
@@ -28,7 +44,9 @@ public class ClientGroup extends Thread{
         ServElSoc.register(SelectorS, SelectionKey.OP_READ);
         System.out.println(ServElSoc.getRemoteAddress()+" ♫CONNECTED♫");
         this.PORT = PORT;
-        this.dataPackQueue=dataPackQueue;
+        resetCnt();
+        incrementCnt();
+        this.dataPackQueue = dataPackQueue;
         start();
     }
 
@@ -37,6 +55,7 @@ public class ClientGroup extends Thread{
         ClientS.configureBlocking(false);
         ClientS.register(SelectorS, SelectionKey.OP_READ);
         System.out.println(ClientS.getRemoteAddress()+" ♫CONNECTED♫");
+        incrementCnt();
     }
 
     public void run()
@@ -64,7 +83,7 @@ public class ClientGroup extends Thread{
     }
 
     //приём json-а от клиента и преобразование в объекта dataRecieve.DataPack
-    private static void takeGson(SelectionKey key)
+    private void takeGson(SelectionKey key)
     {
         try {
             SocketChannel client = (SocketChannel) key.channel();
@@ -73,6 +92,7 @@ public class ClientGroup extends Thread{
             String gsonClient = new String(buffer.array()).trim();
             if(gsonClient.equals("EndThisConnection")) {//TODO Add types of getting data
                 try {
+                    decrementCnt();
                     System.out.println(((SocketChannel) key.channel()).getRemoteAddress() + " #DISCONNECTED_GOOD# from thread" + currentThread().getId() + " ");
                     key.channel().close();
                 } catch (IOException ioException) {
@@ -86,10 +106,10 @@ public class ClientGroup extends Thread{
                 dataPackQueue.add(clientData);
                 //clientData.print();
             }
-
         }catch (IOException e) {
             try {
-                System.out.println(((SocketChannel)key.channel()).getRemoteAddress()+" #DISCONNECTED# from thread"+currentThread().getId()+" ");
+                decrementCnt();
+                System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread"+currentThread().getId()+" ");
                 key.channel().close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
