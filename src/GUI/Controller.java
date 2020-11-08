@@ -177,7 +177,12 @@ public class Controller {
     }
 
     public void closeApp() {
-        thController.sendClose();
+        try {
+            thController.sendClose();
+        }catch (IOException e){
+            errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
+            errorMessage.setVisible(true);
+        }
         /*try {
             thController.closeService();
         }catch (IOException e) {
@@ -210,7 +215,12 @@ public class Controller {
             onTurnedOn();
             Thread.UncaughtExceptionHandler h = (th, ex) -> {
                 //try {
-                thController.sendClose();
+                try {
+                    thController.sendClose();
+                }catch (IOException e){
+                    errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
+                    errorMessage.setVisible(true);
+                }
                 /*}catch(IOException e) {
                     errorMessage.setText("Error in receiving data. Could not close connection correctly");
                     errorMessage.setVisible(true);
@@ -245,7 +255,12 @@ public class Controller {
         }
         else {
             onTurnedOff();
-            thController.sendClose();
+            try {
+                thController.sendClose();
+            }catch (IOException e){
+                errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
+                errorMessage.setVisible(true);
+            }
             /*try{
                 thController.closeService();
             }catch (IOException e) {
