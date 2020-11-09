@@ -1,5 +1,6 @@
 package dataRecieve;
 
+import GUI.PrettyException;
 import com.google.gson.Gson;
 
 import java.io.*;
@@ -16,10 +17,11 @@ import java.util.Stack;
 //класс объекта, работающего в отдельном потоке, взаимодействующий с Сокетами,
 //записанными в его селектор
 public class ClientGroup extends Thread{
-    public Selector SelectorS;
+    private Selector SelectorS;
     int PORT;
     private int clientAm = 0;
     private Queue<DataPack> dataPackQueue;
+    private boolean isCloseSent = false;
 
     private void incrementCnt(){
         clientAm++;
@@ -38,11 +40,15 @@ public class ClientGroup extends Thread{
     }
 
     //конструктор
-    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws IOException {
-        SelectorS = Selector.open();
-        ServElSoc.configureBlocking(false);
-        ServElSoc.register(SelectorS, SelectionKey.OP_READ);
-        System.out.println(ServElSoc.getRemoteAddress()+" ♫CONNECTED♫");
+    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws PrettyException {
+        try {
+            SelectorS = Selector.open();
+            ServElSoc.configureBlocking(false);
+            ServElSoc.register(SelectorS, SelectionKey.OP_READ);
+            System.out.println(ServElSoc.getRemoteAddress() + " ♫CONNECTED♫");
+        }catch(IOException e){
+            throw new PrettyException(e, "Error creating ClientGroup");
+        }
         this.PORT = PORT;
         resetCnt();
         incrementCnt();
@@ -58,31 +64,57 @@ public class ClientGroup extends Thread{
         incrementCnt();
     }
 
-    public void run()
-    {
+    public void run() {
         try {
+            isCloseSent = false;
             while (true) {
-                int res = 0;
-                res = SelectorS.select(100); //ожидание действий от клиентов
-                if (res > 0) {
-                    Set<SelectionKey> selectedKeys = SelectorS.selectedKeys(); //создание ключей для соединений, от которых пришли запросы
-                    Iterator<SelectionKey> iter = selectedKeys.iterator();
-                    while (iter.hasNext()) {
-                        SelectionKey key = iter.next();
-                        if (key.isReadable()) {
-                            takeGson(key);
-                        }
-                        iter.remove();
-                    }
+
+                try {
+                    SelectorS.select(); //ожидание действий от клиентов
+                }catch(IOException e){
+                    throw new PrettyException(e, "Error managing client group");
                 }
-            }
-        }catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("♂PogChamp Server is down♂");
+
+                if (isCloseSent){
+                    try{
+                    closeClientGroup();
+                    }catch(IOException e){
+                        throw new PrettyException(e, "Error closing client group");
+                    }
+                    return;
+                }
+
+                Set<SelectionKey> selectedKeys = SelectorS.selectedKeys(); //создание ключей для соединений, от которых пришли запросы
+                Iterator<SelectionKey> iter = selectedKeys.iterator();
+                while (iter.hasNext()) {
+                    SelectionKey key = iter.next();
+                    if (key.isReadable()) {
+                        takeGson(key);
+                    }
+                    iter.remove();
+                }
+           }
+        }catch (PrettyException e) {
+            throw new RuntimeException(e.getPrettyMessage());
         }
     }
 
-    //приём json-а от клиента и преобразование в объекта dataRecieve.DataPack
+    public void closeClientGroup() throws IOException {
+        if (SelectorS != null) {
+            SelectorS.close();
+        }
+        SelectorS = null;
+        if (dataPackQueue != null)
+            dataPackQueue.clear();
+        dataPackQueue = null;
+    }
+
+    public void sendClose(){
+        isCloseSent = true;
+        SelectorS.wakeup();
+    }
+
+    //приём json-а от клиента и преобразование в объекта dataReceive.DataPack
     private void takeGson(SelectionKey key)
     {
         try {

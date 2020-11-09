@@ -152,12 +152,25 @@ public class ThreadController {
 
     public void closeService() throws IOException {
         isServerToggledOff = true;
-        for (ClientGroup server : serverList){
-            server.interrupt();
+        //For some reason i can't close connection from other thread. They say it's an OS-dependant thing
+        //That's why i haven't placed this in closeService() as meant to be called from main thread
+        if (serverList != null) {
+            for (ClientGroup server : serverList) {
+                server.sendClose();
+                server.interrupt();
+                server = null;
+            }
+            serverList.clear();
+            serverList = null;
         }
 
-        ServerS.close();
-        serverList.clear();
+        if (sChannel != null)
+            sChannel.close();
+        sChannel = null;
+
+        if (sSelector != null)
+            sSelector.close();
+        sSelector = null;
     }
 
 }

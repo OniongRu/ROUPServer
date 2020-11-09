@@ -78,7 +78,7 @@
                         </VBox>
                         <VBox prefHeight="100.0" prefWidth="250.0">
                            <children>
-                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: DEDEDE;" text="Password">
+                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: DEDEDE;" text="Port">
                                  <font>
                                     <Font size="18.0" />
                                  </font>
@@ -86,7 +86,7 @@
                                     <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                  </VBox.margin>
                               </Text>
-                              <TextField fx:id="passwordField" style="-fx-background-color: #585858; -fx-text-inner-color: #DEDEDE;">
+                              <TextField fx:id="portField" style="-fx-background-color: #585858; -fx-text-inner-color: #DEDEDE;">
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="20.0" right="10.0" />
                                  </VBox.margin>
@@ -123,6 +123,9 @@
                            </image>
                         </ImageView>
                         <Text fx:id="errorMessage" fill="#ff902f" strokeType="OUTSIDE" strokeWidth="0.0" text="No internet connection" visible="false">
+                           <font>
+                              <Font size="10.0" />
+                           </font>
                            <VBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </VBox.margin>

@@ -37,7 +37,7 @@ public class Controller {
     private TextField nameField;
 
     @FXML
-    private TextField passwordField;
+    private TextField portField;
 
     @FXML
     private Text statusText;
@@ -56,7 +56,8 @@ public class Controller {
 
     private static final String stylePath = "GUI/style/";
 
-    public static final int PORT = 5020;
+    public static int port = 5020;
+    private static final int DEFAULTPORT = 5020;
 
     ThreadController thController = null;
 
@@ -183,12 +184,6 @@ public class Controller {
             errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
             errorMessage.setVisible(true);
         }
-        /*try {
-            thController.closeService();
-        }catch (IOException e) {
-            errorMessage.setText("Could not close connection correctly");
-            errorMessage.setVisible(true);
-        }*/
         Platform.exit();
         System.exit(0);
     }
@@ -198,7 +193,12 @@ public class Controller {
         statusText.setText("Turn off");
         toggleButton.setImage(new Image(stylePath + "turnOnButtonSmall.png"));
         nameField.setDisable(true);
-        passwordField.setDisable(true);
+        if (!portField.getText().equals(""))
+            port = Integer.parseInt(portField.getText());
+        else{
+            port = DEFAULTPORT;
+        }
+        portField.setDisable(true);
     }
 
     public void onTurnedOff(){
@@ -206,7 +206,7 @@ public class Controller {
         statusText.setText("Turn on");
         toggleButton.setImage(new Image(stylePath + "turnOffButtonSmall.png"));
         nameField.setDisable(false);
-        passwordField.setDisable(false);
+        portField.setDisable(false);
     }
 
     private void toggleSwitch()
@@ -233,7 +233,7 @@ public class Controller {
                 @Override
                 public void run() {
                     try{
-                    thController.launchService(PORT);
+                    thController.launchService(port);
                     } catch (PrettyException e) {
                         errorMessage.setText(e.getPrettyMessage());
                         errorMessage.setVisible(true);
@@ -241,6 +241,19 @@ public class Controller {
                             thController.closeService();
                         } catch (IOException ioException) {
                             errorMessage.setText(e.getPrettyMessage() + "\n" + "Also could not close connection correctly");
+                            errorMessage.setVisible(true);
+                        }
+                        //System.out.println(e.toString());
+                        //I hate this thing =(
+                        //Was stuck here for hours
+                        throw new RuntimeException();
+                    }catch (RuntimeException e) {
+                        errorMessage.setText(e.getMessage());
+                        errorMessage.setVisible(true);
+                        try {
+                            thController.closeService();
+                        } catch (IOException ioException) {
+                            errorMessage.setText(e.getMessage() + "\n" + "Also could not close connection correctly");
                             errorMessage.setVisible(true);
                         }
                         //System.out.println(e.toString());
