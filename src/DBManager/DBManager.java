@@ -8,10 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -56,7 +53,40 @@ public class DBManager {
         System.out.printf("Added %d rows at table resourceUsage\n", rows);
     }
 
+    public ResourceUsage getResourceUsage(int id) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM resourceUsage WHERE ID=" + id);
+        resultSet.next();
 
+        Date date = resultSet.getDate(2);
+        double cpu = resultSet.getDouble(3);
+        int ram = resultSet.getInt(4);
+        int id_p = resultSet.getInt(5);
+        int thread = resultSet.getInt(6);
+
+        return new ResourceUsage(thread, cpu, ram);
+    }
+
+    public Program getProgram(int id) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM program WHERE ID=" + id);
+        resultSet.next();
+
+        String program_name = resultSet.getString(2);
+        int id_u = resultSet.getInt(3);
+
+        return new Program(id, program_name);
+    }
+
+    public User getUser(int id) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE ID=+"id);
+        resultSet.next();
+        //int id = resultSet.getInt(1);
+        String name = resultSet.getString(2);
+        int price = resultSet.getInt(3);
+        return new User();
+    }
 
     private Connection getConnection() throws SQLException, IOException {
         Properties props = new Properties();
