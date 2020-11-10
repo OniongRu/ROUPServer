@@ -218,7 +218,7 @@ public class Controller {
                 try {
                     thController.sendClose();
                 }catch (IOException e){
-                    errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
+                    errorMessage.setText("Selector is invalid. And closing connection failed");
                     errorMessage.setVisible(true);
                 }
                 /*}catch(IOException e) {
@@ -240,7 +240,7 @@ public class Controller {
                         try {
                             thController.closeService();
                         } catch (IOException ioException) {
-                            errorMessage.setText(e.getPrettyMessage() + "\n" + "Also could not close connection correctly");
+                            errorMessage.setText(e.getPrettyMessage() + "\n" + "Also closing connection failed");
                             errorMessage.setVisible(true);
                         }
                         //System.out.println(e.toString());
@@ -253,7 +253,7 @@ public class Controller {
                         try {
                             thController.closeService();
                         } catch (IOException ioException) {
-                            errorMessage.setText(e.getMessage() + "\n" + "Also could not close connection correctly");
+                            errorMessage.setText(e.getMessage() + "\n" + "Also closing connection failed");
                             errorMessage.setVisible(true);
                         }
                         //System.out.println(e.toString());
@@ -271,7 +271,7 @@ public class Controller {
             try {
                 thController.sendClose();
             }catch (IOException e){
-                errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
+                errorMessage.setText("Selector is invalid. And closing connection failed");
                 errorMessage.setVisible(true);
             }
             /*try{

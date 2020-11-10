@@ -1,20 +1,23 @@
 package threadManager;
 
+import GUI.PrettyException;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Queue;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.*;
 
 public class ThreadController {
-    ServerSocketChannel ServerS = null;
-    public static ArrayList<ClientGroup> serverList = new ArrayList<>();
+    Selector sSelector = null;
+    ServerSocketChannel sChannel = null;
+    public static ArrayList<ClientGroup> serverList = null;
     private boolean isServerToggledOff = true;
 
     private Queue<DataPack> dataPackQueue = new Queue<DataPack>() {
@@ -109,6 +112,9 @@ public class ThreadController {
         }
     };
 
+    public ThreadController() {
+    }
+
     public boolean getIsServerToggledOff(){
         return isServerToggledOff;
     }
@@ -132,22 +138,67 @@ public class ThreadController {
         return minServerIndex;
     }
 
-    public void launchService(final int PORT) throws IOException {
-            ServerS = ServerSocketChannel.open();
-            ServerS.bind(new InetSocketAddress(PORT));
+    public void accept(SelectionKey key, final int PORT) throws PrettyException, IOException {
+        int coresNum = Runtime.getRuntime().availableProcessors();
+        SocketChannel clientChannel = null;
+        clientChannel = sChannel.accept();
+        clientChannel.configureBlocking(false);
+        if (serverList.size() + 2 < coresNum) {
+            ClientGroup clientGroup = null;
+            serverList.add(new ClientGroup(clientChannel, PORT, dataPackQueue));
+        } else {
+            serverList.get(getNumFreeServer()).AddSocket(clientChannel);
+        }
+    }
 
-            int coresNum = Runtime.getRuntime().availableProcessors();
-            //Выделяем число потоков равное количеству ядер в системе под обработку информации от клиентов
-            for (int curThNum = 0; curThNum < coresNum; curThNum++) {
-                SocketChannel ClientS = ServerS.accept(); // ожидание входящего соединения
-                serverList.add(new ClientGroup(ClientS, PORT, dataPackQueue)); //инициализаия 1ого объекта
+    public void launchService(final int PORT) throws PrettyException, RuntimeException{
+        isServerToggledOff = false;
+        serverList = new ArrayList<>();
+        try {
+            sChannel = ServerSocketChannel.open();
+            sChannel.configureBlocking(false);
+            sChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
+            sSelector = SelectorProvider.provider().openSelector();
+            sChannel.register(sSelector, SelectionKey.OP_ACCEPT);
+            sChannel.socket().bind(new InetSocketAddress(PORT));
+        }catch(IOException e){
+            throw new PrettyException(e, "Can't launch: fail opening connection");
+        }
+
+        while(true) {
+            try {
+                sSelector.select();
+            }catch (IOException e){
+                throw (new PrettyException(e, "Error managing clients (Selector.select)"));
+            }
+            Set<SelectionKey> selectedKeys = sSelector.selectedKeys();
+            if (isServerToggledOff){
+                try {
+                    closeService();
+                }catch (IOException e){
+                    throw(new PrettyException(e, "Closing server's connection failed"));
+                }
+                return;
             }
 
-            while (!isServerToggledOff) {
-                SocketChannel ClientS = ServerS.accept(); // ожидание входящего соединения
-                ClientS.configureBlocking(false);
-                serverList.get(getNumFreeServer()).AddSocket(ClientS); // регистрация входящего соединения в селекторе одного из объекта
+            Iterator<SelectionKey> iterator = selectedKeys.iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+                if (!key.isValid()) {
+                    continue;
+                }
+                if (key.isAcceptable()){
+                    try {
+                        accept(key, PORT);
+                    }catch(PrettyException e) {
+                        throw e;
+                    }catch (IOException e){
+                        throw (new PrettyException(e, "Can't accept clients"));
+                    }
+                }
             }
+        }
     }
 
     public void closeService() throws IOException {
@@ -171,6 +222,15 @@ public class ThreadController {
         if (sSelector != null)
             sSelector.close();
         sSelector = null;
+    }
+
+    public void sendClose() throws IOException {
+        isServerToggledOff = true;
+        if (sSelector != null)
+            sSelector.wakeup();
+        else {
+            closeService();
+        }
     }
 
 }

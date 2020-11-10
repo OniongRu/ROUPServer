@@ -115,13 +115,14 @@ public class ClientGroup extends Thread{
     }
 
     //приём json-а от клиента и преобразование в объекта dataReceive.DataPack
-    private void takeGson(SelectionKey key)
-    {
+    //
+    private void takeGson(SelectionKey key){
         try {
             SocketChannel client = (SocketChannel) key.channel();
             ByteBuffer buffer = ByteBuffer.allocate(1024*10);
             client.read(buffer);
             String gsonClient = new String(buffer.array()).trim();
+            //gsonClient
             if(gsonClient.equals("EndThisConnection")) {//TODO Add types of getting data
                 try {
                     decrementCnt();
@@ -131,7 +132,7 @@ public class ClientGroup extends Thread{
                     ioException.printStackTrace();
                 }
             }
-            else {
+            else /*if (gsonClient.)*/{
                 Gson gson = new Gson();
                 System.out.println(gsonClient);
                 DataPack clientData = gson.fromJson(gsonClient, DataPack.class);
