@@ -12,7 +12,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 
 //класс объекта, работающего в отдельном потоке, взаимодействующий с Сокетами,
 //записанными в его селектор
@@ -115,34 +114,30 @@ public class ClientGroup extends Thread{
     }
 
     //приём json-а от клиента и преобразование в объекта dataReceive.DataPack
-    //
-    private void takeGson(SelectionKey key){
+    //In this application there is an agreement "EndThisConnection" in a beginning means stop signal
+    //Beginning "Client data\n" means that server is about to receive DataPack
+    //Beginning "Request\n" means that server is about to receive a query for an administrator's client
+    private void takeGson(SelectionKey key) {
         try {
             SocketChannel client = (SocketChannel) key.channel();
             ByteBuffer buffer = ByteBuffer.allocate(1024*10);
             client.read(buffer);
             String gsonClient = new String(buffer.array()).trim();
-            //gsonClient
             if(gsonClient.equals("EndThisConnection")) {//TODO Add types of getting data
-                try {
-                    decrementCnt();
-                    System.out.println(((SocketChannel) key.channel()).getRemoteAddress() + " #DISCONNECTED_GOOD# from thread" + currentThread().getId() + " ");
-                    key.channel().close();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
+                decrementCnt();
+                ParseJSON.parseEndConnection(key);
             }
-            else /*if (gsonClient.)*/{
-                Gson gson = new Gson();
+            else if (gsonClient.startsWith("Client data\n")) {
+                dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
                 System.out.println(gsonClient);
-                DataPack clientData = gson.fromJson(gsonClient, DataPack.class);
-                dataPackQueue.add(clientData);
-                //clientData.print();
+            }
+            else if (gsonClient.startsWith("Request\n")) {
+                //TODO handle requests
             }
         }catch (IOException e) {
+            decrementCnt();
             try {
-                decrementCnt();
-                System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread"+currentThread().getId()+" ");
+                System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
                 key.channel().close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
