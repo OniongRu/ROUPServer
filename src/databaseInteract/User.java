@@ -33,6 +33,14 @@ public class User {
 
     public int getID() {return ID;}
 
+    public User(int id,String name, String login, String password, ArrayList<Program> Programs) {
+        this.ID = id;
+        this.name = name;
+        this.login = login;
+        this.password = password;
+        this.Programs = Programs;
+    }
+
     public User(String name, String login, String password, ArrayList<Program> Programs) {
         this.name = name;
         this.login = login;
