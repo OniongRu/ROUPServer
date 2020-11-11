@@ -1,5 +1,6 @@
 package DBManager;
 
+import databaseInteract.HourInf;
 import databaseInteract.Program;
 import databaseInteract.ResourceUsage;
 import databaseInteract.User;
@@ -10,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
@@ -48,44 +50,50 @@ public class DBManager {
         Statement statement = conn.createStatement();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         int rows = statement.executeUpdate(String.format(
-                "INSERT resourceUsage (date_using, cpuUsage, ramUsage, program_id, threadAmount) VALUES (%f, %d, %d, %d)"
+                "INSERT resourceUsage (date_using, cpuUsage, ramUsage, program_id, thread_amount) VALUES (%f, %d, %d, %d)"
                 , resource.get_cpuUsage(), resource.get_ramUsage(), id, resource.get_threadAmount()));
         System.out.printf("Added %d rows at table resourceUsage\n", rows);
     }
 
-    public ResourceUsage getResourceUsage(int id) throws SQLException {
+    public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
         Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM resourceUsage WHERE ID=" + id);
-        resultSet.next();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM resourceUsage WHERE program_id=" + id_p);
+        ArrayList<HourInf> hourInfs = new ArrayList<>();
 
-        Date date = resultSet.getDate(2);
-        double cpu = resultSet.getDouble(3);
-        int ram = resultSet.getInt(4);
-        int id_p = resultSet.getInt(5);
-        int thread = resultSet.getInt(6);
-
-        return new ResourceUsage(thread, cpu, ram);
+        while (resultSet.next()) {
+            int id = resultSet.getInt(1);
+            Date date =  new Date();//resultSet.getDate(2);
+            double cpu = resultSet.getDouble(3);
+            long ram = resultSet.getInt(4);
+            int thread = resultSet.getInt(6);
+            hourInfs.add(new HourInf(thread, cpu, ram, date));
+        }
+        return hourInfs;
     }
 
-    public Program getProgram(int id) throws SQLException {
+    public ArrayList<Program> getProgramsByUserId(int id_u) throws SQLException {
         Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM program WHERE ID=" + id);
-        resultSet.next();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM program WHERE user_id=" + id_u);
+        ArrayList<Program> programs = new ArrayList<>();
 
-        String program_name = resultSet.getString(2);
-        int id_u = resultSet.getInt(3);
-
-        return new Program(id, program_name);
+        while (resultSet.next()) {
+            int id = resultSet.getInt(1);
+            String program_name = resultSet.getString(2);
+            programs.add(new Program(id, program_name, getHourInfByProgramId(id)));
+        }
+        return programs;
     }
 
     public User getUser(int id) throws SQLException {
         Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE ID=+"id);
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE user_id=" + id);
         resultSet.next();
-        //int id = resultSet.getInt(1);
+
         String name = resultSet.getString(2);
-        int price = resultSet.getInt(3);
-        return new User();
+        String login = resultSet.getString(4);
+        String password = resultSet.getString(5);
+
+        return new User(id, name, login, password, getProgramsByUserId(id));
     }
 
     private Connection getConnection() throws SQLException, IOException {
