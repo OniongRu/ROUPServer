@@ -1,32 +1,29 @@
 package databaseInteract;
 
-
-import dataRecieve.DataPack;
 import dataRecieve.ProgramClass;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 //In construction. Not working yet
 public class Program {
     private long ID;
     private String name;
-    private HashMap<Date,HourInf> HourWork;
+    private ArrayList<HourInf> HourWork;
 
-    public HashMap<Date, HourInf> getHourWork() {
-        return HourWork;
-    }
+    public ArrayList<HourInf> getHourWork() {  return HourWork;   }
 
     public void addNewProgram(Date date, ProgramClass programClass)
-    {
-      date.setMinutes(0);
+    {   date.setMinutes(0);
         date.setSeconds(0);
-        if(!HourWork.containsKey(date)){
-            HourWork.put(date,new HourInf());
+        HourInf someHour= isHourInArray(date);
+        if(someHour!=null) {
+            HourWork.add(new HourInf(date));
+            someHour=HourWork.get(HourWork.size()-1);
         }
         this.name = programClass.getName();
         this.ID = programClass.getID();
-        HourWork.get(date).AddNewProgram(programClass);
+        someHour.AddNewProgram(programClass);
     }
 
 
@@ -43,7 +40,23 @@ public class Program {
     {
         this.ID = ID;
         this.name = name;
-        this.HourWork = new HashMap<>();
+        this.HourWork = new ArrayList<>();
     }
 
+    public Program(int ID, String name, ArrayList<HourInf> hourInf) {
+        this.ID = ID;
+        this.name = name;
+        this.HourWork = new ArrayList<>();
+        this.HourWork = hourInf;
+    }
+
+    private HourInf isHourInArray(Date date)
+    {
+        for (HourInf hour: HourWork) {
+            if(hour.getCreationDate().equals(date)) {
+                return hour;
+            }
+        }
+        return null;
+    }
 }
