@@ -18,8 +18,7 @@ public class DataPack {
         return userName;
     }
 
-    public Date getDate() {        return creationDate;
-    }
+    public Date getDate() { return creationDate; }
 
     public void setUserName(String userName) {
         this.userName = userName;
