@@ -43,7 +43,7 @@ public class ProgramClass {//class which contains info about program
         return ramUsage;
     }
 
-    //Method to merge databaseInteract.Program with equal names
+    //Method to merge databaseInteract.ProgramTracker with equal names
     //Merged ID will be the minimum ID of processes with the same name
     public void merge(long ID, int threadAmount, double cpuUsage, long ramUsage) {
         if (this.ID > ID)

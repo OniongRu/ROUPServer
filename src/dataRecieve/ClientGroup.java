@@ -61,6 +61,7 @@ public class ClientGroup extends Thread{
         ClientS.register(SelectorS, SelectionKey.OP_READ);
         System.out.println(ClientS.getRemoteAddress()+" ♫CONNECTED♫");
         incrementCnt();
+        SelectorS.wakeup();
     }
 
     public void run() {

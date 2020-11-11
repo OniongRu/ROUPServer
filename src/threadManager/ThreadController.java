@@ -147,6 +147,7 @@ public class ThreadController {
             ClientGroup clientGroup = null;
             serverList.add(new ClientGroup(clientChannel, PORT, dataPackQueue));
         } else {
+            System.out.println(getNumFreeServer());
             serverList.get(getNumFreeServer()).AddSocket(clientChannel);
         }
     }

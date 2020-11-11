@@ -1,10 +1,7 @@
 package databaseInteract;
 
 
-import dataRecieve.DataPack;
 import dataRecieve.ProgramClass;
-import databaseInteract.ResourceUsage;
-import java.util.Date;
 import java.util.Date;
 
 
@@ -30,16 +27,39 @@ public class HourInf {
         return resource;
     }
 
-    public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage)
+    public Date getCreationDate() { return creationDate; }
+
+    public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
     {
 
         this.timeSum = timeSum;
+        this.creationDate =creationDate;
         this.timeActSum = timeActSum;
         this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
         this.dataPackCount=0;
     }
+
+    public HourInf(int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
+    {
+
+        this.timeSum = 0;
+        this.creationDate =creationDate;
+        this.timeActSum = 0;
+        this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
+        this.dataPackCount=0;
+    }
+
     public HourInf()
     {
+        this.timeSum=0;
+        this.timeActSum=0;
+        this.dataPackCount=0;
+        this.resource=new ResourceUsage();
+    }
+    
+    public HourInf(Date date)
+    {
+        this.creationDate=date;
         this.timeSum=0;
         this.timeActSum=0;
         this.dataPackCount=0;
