@@ -2,6 +2,7 @@ package databaseInteract;
 
 
 import dataRecieve.ProgramClass;
+
 import java.util.Date;
 
 
@@ -11,6 +12,7 @@ public class HourInf {
 
     private Date creationDate;
     private int dataPackCount;
+    private int activeDataPackCount;
     private int timeSum;
     private int timeActSum;
     private ResourceUsage resource;
@@ -36,7 +38,8 @@ public class HourInf {
         this.creationDate =creationDate;
         this.timeActSum = timeActSum;
         this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
-        this.dataPackCount=0;
+        this.dataPackCount = 0;
+        this.activeDataPackCount = 0;
     }
 
     public HourInf(int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
@@ -46,7 +49,8 @@ public class HourInf {
         this.creationDate =creationDate;
         this.timeActSum = 0;
         this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
-        this.dataPackCount=0;
+        this.dataPackCount = 0;
+        this.activeDataPackCount = 0;
     }
 
     public HourInf()
@@ -62,12 +66,24 @@ public class HourInf {
         this.creationDate=date;
         this.timeSum=0;
         this.timeActSum=0;
-        this.dataPackCount=0;
-        this.resource=new ResourceUsage();
+        this.dataPackCount = 0;
+        this.activeDataPackCount = 0;
+        this.resource = new ResourceUsage();
     }
 
-    public void AddNewProgram(ProgramClass programClass){
+    public void AddNewProgram(ProgramClass programClass, String activeWindow) {
         dataPackCount++;
-        resource.AddMoreInfoAbout(programClass.getThreadAmount(),programClass.getCpuUsage(),programClass.getRamUsage());
+        if (activeWindow.equals(programClass.getName())) {
+            activeDataPackCount++;
+        }
+        resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
     }
+
+    public void normalizeHourInf() {
+        timeSum = dataPackCount * 10;  //change data pack frequency
+        timeSum = activeDataPackCount * 10; //change data pack frequency
+        resource.normalizeHourInf(dataPackCount);
+        dataPackCount = 1;
+    }
+
 }

@@ -1,7 +1,9 @@
 package databaseInteract;
 
+import DBManager.DBManager;
 import dataRecieve.ProgramClass;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -41,16 +43,22 @@ public class User {
         this.Programs = Programs;
     }
 
-    public void addInfoAboutPrograms(Date date, ProgramClass program){
-        for(ProgramTracker prog: Programs)
-        {
-            if(prog.getName().equals(program.getName())){
-                prog.addNewProgram(date,program);
+    public void addInfoAboutPrograms(Date date, ProgramClass program, String activeWindow) {
+        for (ProgramTracker prog : Programs) {
+            if (prog.getName().equals(program.getName())) {
+                prog.addNewProgram(date, program, activeWindow);
                 return;
             }
         }
 
         Programs.add(new ProgramTracker(program.getID(), program.getName()));
-        Programs.get(Programs.size() - 1).addNewProgram(date, program);
+        Programs.get(Programs.size() - 1).addNewProgram(date, program, activeWindow);
+    }
+
+    public void normalizeHourInf(DBManager dbManager) throws SQLException {
+        for (ProgramTracker program : Programs) {
+            program.normalizeHourInf(dbManager);
+            dbManager.addProgram(program, this.ID);
+        }
     }
 }

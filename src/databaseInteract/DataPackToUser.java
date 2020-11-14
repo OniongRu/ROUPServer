@@ -4,25 +4,30 @@ import dataRecieve.DataPack;
 import dataRecieve.ProgramClass;
 
 import java.util.ArrayList;
-
 import java.util.Queue;
 
 public class DataPackToUser {
     Queue<DataPack> dataPacks;
     ArrayList<User> users;
 
+
     public DataPackToUser(Queue<DataPack> dataPacks, ArrayList<User> users) {
         this.dataPacks = dataPacks;
         this.users = users;
     }
 
+    public ArrayList<User> getUsers() {
+        return users;
+    }
+
     public void TransformPacks() {
-        while (!dataPacks.isEmpty()) {
+        while (dataPacks != null && !dataPacks.isEmpty()) {
             DataPack dp = dataPacks.peek();
             dataPacks.remove();
             AddToUsers(dp);
         }
     }
+
 
     private void AddToUsers(DataPack dp) {
         User someUser = isUserInArray(dp.getUserName());
@@ -33,7 +38,7 @@ public class DataPackToUser {
             someUser = users.get(users.size() - 1);
         }
         for (ProgramClass programClass : dp.getPrograms()) {
-            someUser.addInfoAboutPrograms(dp.getDate(), programClass);
+            someUser.addInfoAboutPrograms(dp.getDate(), programClass, dp.getActiveWindow());
         }
     }
 

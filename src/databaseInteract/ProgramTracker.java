@@ -1,7 +1,9 @@
 package databaseInteract;
 
+import DBManager.DBManager;
 import dataRecieve.ProgramClass;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -12,10 +14,11 @@ public class ProgramTracker {
     private String name;
     private ArrayList<HourInf> HourWork;
 
-    public ArrayList<HourInf> getHourWork() {  return HourWork;   }
+    public ArrayList<HourInf> getHourWork() {
+        return HourWork;
+    }
 
-    public void addNewProgram(Date date, ProgramClass programClass)
-    {
+    public void addNewProgram(Date date, ProgramClass programClass, String activeWindow) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.set(Calendar.MINUTE, 0);
@@ -31,7 +34,7 @@ public class ProgramTracker {
         }
         this.name = programClass.getName();
         this.ID = programClass.getID();
-        someHour.AddNewProgram(programClass);
+        someHour.AddNewProgram(programClass, activeWindow);
     }
 
 
@@ -58,13 +61,19 @@ public class ProgramTracker {
         this.HourWork = hourInf;
     }
 
-    private HourInf isHourInArray(Date date)
-    {
-        for (HourInf hour: HourWork) {
-            if(hour.getCreationDate().equals(date)) {
+    private HourInf isHourInArray(Date date) {
+        for (HourInf hour : HourWork) {
+            if (hour.getCreationDate().equals(date)) {
                 return hour;
             }
         }
         return null;
+    }
+
+    public void normalizeHourInf(DBManager dbManager) throws SQLException {
+        for (HourInf hourInf : HourWork) {
+            hourInf.normalizeHourInf();
+            dbManager.addResourceUsage(hourInf.getResource(), this.ID);
+        }
     }
 }

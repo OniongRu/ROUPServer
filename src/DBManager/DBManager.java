@@ -38,7 +38,7 @@ public class DBManager {
         System.out.printf("Added %d rows at table users\n", rows);
     }
 
-    public void addProgram(ProgramTracker program, int id) throws SQLException {
+    public void addProgram(ProgramTracker program, long id) throws SQLException {
         Statement statement = conn.createStatement();
         int rows = statement.executeUpdate(String.format(
                 "INSERT program (program_name, user_id) VALUES ('%s', %d)"
@@ -46,7 +46,7 @@ public class DBManager {
         System.out.printf("Added %d rows at table program\n", rows);
     }
 
-    public void addResourceUsage(ResourceUsage resource, int id) throws SQLException {
+    public void addResourceUsage(ResourceUsage resource, long id) throws SQLException {
         Statement statement = conn.createStatement();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         int rows = statement.executeUpdate(String.format(

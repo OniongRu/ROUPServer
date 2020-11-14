@@ -18,7 +18,13 @@ public class DataPack {
         return userName;
     }
 
-    public Date getDate() { return creationDate; }
+    public Date getDate() {
+        return creationDate;
+    }
+
+    public String getActiveWindow() {
+        return activeWindow;
+    }
 
     public void setUserName(String userName) {
         this.userName = userName;

@@ -3,6 +3,8 @@ package threadManager;
 import GUI.PrettyException;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
+import databaseInteract.DatabaseWriter;
+import databaseInteract.User;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -112,14 +114,19 @@ public class ThreadController {
         }
     };
 
+    private ArrayList<User> usersToBD = new ArrayList<>();
+
+    DatabaseWriter databaseWriter = new DatabaseWriter(usersToBD, dataPackQueue);
+
+
     public ThreadController() {
     }
 
-    public boolean getIsServerToggledOff(){
+    public boolean getIsServerToggledOff() {
         return isServerToggledOff;
     }
 
-    public void setIsServerToggledOff(boolean isServerToggledOff){
+    public void setIsServerToggledOff(boolean isServerToggledOff) {
         this.isServerToggledOff = isServerToggledOff;
     }
 
@@ -155,6 +162,7 @@ public class ThreadController {
     public void launchService(final int PORT) throws PrettyException, RuntimeException{
         isServerToggledOff = false;
         serverList = new ArrayList<>();
+        databaseWriter.start();
         try {
             sChannel = ServerSocketChannel.open();
             sChannel.configureBlocking(false);
@@ -233,5 +241,6 @@ public class ThreadController {
             closeService();
         }
     }
+
 
 }

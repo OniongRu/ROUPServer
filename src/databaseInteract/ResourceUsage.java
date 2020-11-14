@@ -28,15 +28,20 @@ public class ResourceUsage {
     {
         return threadAmount;
     }
-    public double get_cpuUsage()
-    {
+
+    public double get_cpuUsage() {
         return cpuUsage;
     }
-    public long get_ramUsage ()
-    {
+
+    public long get_ramUsage() {
         return ramUsage;
     }
 
+    public void normalizeHourInf(int dataPackCount) {
+        threadAmount /= dataPackCount;
+        cpuUsage /= dataPackCount;
+        ramUsage /= dataPackCount;
+    }
 }
 
 

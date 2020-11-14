@@ -1,11 +1,9 @@
 package dataRecieve;
 
 import GUI.PrettyException;
-import com.google.gson.Gson;
 
-import java.io.*;
-import java.nio.*;
-import java.lang.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -20,6 +18,8 @@ public class ClientGroup extends Thread{
     int PORT;
     private int clientAm = 0;
     private Queue<DataPack> dataPackQueue;
+
+
     private boolean isCloseSent = false;
 
     private void incrementCnt(){
@@ -129,7 +129,11 @@ public class ClientGroup extends Thread{
                 ParseJSON.parseEndConnection(key);
             }
             else if (gsonClient.startsWith("Client data\n")) {
-                dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
+                try {
+                    dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    return;
+                }
                 System.out.println(gsonClient);
             }
             else if (gsonClient.startsWith("Request\n")) {
