@@ -1,7 +1,7 @@
 package DBManager;
 
 import databaseInteract.HourInf;
-import databaseInteract.Program;
+import databaseInteract.ProgramTracker;
 import databaseInteract.ResourceUsage;
 import databaseInteract.User;
 
@@ -34,11 +34,11 @@ public class DBManager {
         Statement statement = conn.createStatement();
         int rows = statement.executeUpdate(String.format(
                 "INSERT users(user_id, user_name, login, password) VALUES (%d, '%s', '%s', '%s')"
-                , user.getID(), user.getName(), user.getLogin(), user.getPassword()));
+                , user.getID(), user.getName(), "someLogin", user.getPassword()));
         System.out.printf("Added %d rows at table users\n", rows);
     }
 
-    public void addProgram(Program program, int id) throws SQLException {
+    public void addProgram(ProgramTracker program, int id) throws SQLException {
         Statement statement = conn.createStatement();
         int rows = statement.executeUpdate(String.format(
                 "INSERT program (program_name, user_id) VALUES ('%s', %d)"
@@ -71,15 +71,15 @@ public class DBManager {
         return hourInfs;
     }
 
-    public ArrayList<Program> getProgramsByUserId(int id_u) throws SQLException {
+    public ArrayList<ProgramTracker> getProgramsByUserId(int id_u) throws SQLException {
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM program WHERE user_id=" + id_u);
-        ArrayList<Program> programs = new ArrayList<>();
+        ArrayList<ProgramTracker> programs = new ArrayList<>();
 
         while (resultSet.next()) {
             int id = resultSet.getInt(1);
             String program_name = resultSet.getString(2);
-            programs.add(new Program(id, program_name, getHourInfByProgramId(id)));
+            programs.add(new ProgramTracker(id, program_name, getHourInfByProgramId(id)));
         }
         return programs;
     }
@@ -90,10 +90,9 @@ public class DBManager {
         resultSet.next();
 
         String name = resultSet.getString(2);
-        String login = resultSet.getString(4);
         String password = resultSet.getString(5);
 
-        return new User(id, name, login, password, getProgramsByUserId(id));
+        return new User(id, name, password, getProgramsByUserId(id));
     }
 
     private Connection getConnection() throws SQLException, IOException {
