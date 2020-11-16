@@ -1,34 +1,64 @@
 package dataRecieve;
 
+import DBManager.DBManager;
+import GUI.Controller;
+import GUI.PrettyException;
 import com.google.gson.Gson;
+import databaseInteract.DataPackToUser;
+import databaseInteract.User;
 
+import javax.naming.ldap.Control;
 import java.io.*;
 import java.nio.*;
 import java.lang.*;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 
 //класс объекта, работающего в отдельном потоке, взаимодействующий с Сокетами,
 //записанными в его селектор
 public class ClientGroup extends Thread{
-    public Selector SelectorS;
+    private Selector SelectorS;
     int PORT;
+    private int clientAm = 0;
+    private Queue<DataPack> dataPackQueue;
+    private boolean isCloseSent = false;
 
-    private static Queue<DataPack> dataPackQueue;
+    private void incrementCnt(){
+        clientAm++;
+    }
+
+    private void decrementCnt(){
+        clientAm--;
+    }
+
+    private void resetCnt(){
+        clientAm = 0;
+    }
+
+    public int getClientAm(){
+        return clientAm;
+    }
 
     //конструктор
-    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws IOException {
-        SelectorS = Selector.open();
-        ServElSoc.configureBlocking(false);
-        ServElSoc.register(SelectorS, SelectionKey.OP_READ);
-        System.out.println(ServElSoc.getRemoteAddress()+" ♫CONNECTED♫");
+    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws PrettyException {
+        try {
+            SelectorS = Selector.open();
+            ServElSoc.configureBlocking(false);
+            ServElSoc.register(SelectorS, SelectionKey.OP_READ);
+            System.out.println(ServElSoc.getRemoteAddress() + " ♫CONNECTED♫");
+        }catch(IOException e){
+            throw new PrettyException(e, "Error creating ClientGroup");
+        }
         this.PORT = PORT;
-        this.dataPackQueue=dataPackQueue;
+        resetCnt();
+        incrementCnt();
+        this.dataPackQueue = dataPackQueue;
         start();
     }
 
@@ -37,59 +67,103 @@ public class ClientGroup extends Thread{
         ClientS.configureBlocking(false);
         ClientS.register(SelectorS, SelectionKey.OP_READ);
         System.out.println(ClientS.getRemoteAddress()+" ♫CONNECTED♫");
+        incrementCnt();
+        SelectorS.wakeup();
     }
 
-    public void run()
-    {
+    public void run() {
         try {
+            isCloseSent = false;
             while (true) {
-                int res = 0;
-                res = SelectorS.select(100); //ожидание действий от клиентов
-                if (res > 0) {
-                    Set<SelectionKey> selectedKeys = SelectorS.selectedKeys(); //создание ключей для соединений, от которых пришли запросы
-                    Iterator<SelectionKey> iter = selectedKeys.iterator();
-                    while (iter.hasNext()) {
-                        SelectionKey key = iter.next();
-                        if (key.isReadable()) {
-                            takeGson(key);
-                        }
-                        iter.remove();
-                    }
+
+                try {
+                    SelectorS.select(); //ожидание действий от клиентов
+                }catch(IOException e){
+                    throw new PrettyException(e, "Error managing client group");
                 }
-            }
-        }catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("♂PogChamp Server is down♂");
+
+                if (isCloseSent){
+                    try{
+                    closeClientGroup();
+                    }catch(IOException e){
+                        throw new PrettyException(e, "Error closing client group");
+                    }
+                    return;
+                }
+
+                Set<SelectionKey> selectedKeys = SelectorS.selectedKeys(); //создание ключей для соединений, от которых пришли запросы
+                Iterator<SelectionKey> iter = selectedKeys.iterator();
+                while (iter.hasNext()) {
+                    SelectionKey key = iter.next();
+                    if (key.isReadable()) {
+                        takeGson(key);
+                    }
+                    iter.remove();
+                }
+           }
+        }catch (PrettyException e) {
+            throw new RuntimeException(e.getPrettyMessage());
         }
     }
 
-    //приём json-а от клиента и преобразование в объекта dataRecieve.DataPack
-    private static void takeGson(SelectionKey key)
-    {
+    public void closeClientGroup() throws IOException {
+        if (SelectorS != null) {
+            SelectorS.close();
+        }
+        SelectorS = null;
+        if (dataPackQueue != null)
+            dataPackQueue.clear();
+        dataPackQueue = null;
+    }
+
+    public void sendClose(){
+        isCloseSent = true;
+        SelectorS.wakeup();
+    }
+
+    //приём json-а от клиента и преобразование в объекта dataReceive.DataPack
+    //In this application there is an agreement "EndThisConnection" in a beginning means stop signal
+    //Beginning "Client data\n" means that server is about to receive DataPack
+    //Beginning "Request\n" means that server is about to receive a query for an administrator's client
+    private void takeGson(SelectionKey key) {
         try {
             SocketChannel client = (SocketChannel) key.channel();
             ByteBuffer buffer = ByteBuffer.allocate(1024*10);
             client.read(buffer);
             String gsonClient = new String(buffer.array()).trim();
             if(gsonClient.equals("EndThisConnection")) {//TODO Add types of getting data
-                try {
-                    System.out.println(((SocketChannel) key.channel()).getRemoteAddress() + " #DISCONNECTED_GOOD# from thread" + currentThread().getId() + " ");
-                    key.channel().close();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
+                decrementCnt();
+                ParseJSON.parseEndConnection(key);
             }
-            else {
-                Gson gson = new Gson();
+            else if (gsonClient.startsWith("Client data\n")) {
+                dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
                 System.out.println(gsonClient);
-                DataPack clientData = gson.fromJson(gsonClient, DataPack.class);
-                dataPackQueue.add(clientData);
-                //clientData.print();
+                DataPackToUser converter = new DataPackToUser(dataPackQueue, new ArrayList<>());
+                converter.TransformPacks();
+                ArrayList<User> users = converter.getUsers();
+                DBManager manager = new DBManager();
+                try {
+                    manager.addUser(users.get(0));
+                } catch (SQLException e) {
+                    Controller.getInstance().showErrorMessage("Writing to DB failed");
+                }
+                users.get(0).print();
+                //users = new ArrayList<User>();
+                User user = null;
+                try{
+                    user = manager.getUser(0);
+                } catch (SQLException e) {
+                    Controller.getInstance().showErrorMessage("Reading from DB failed");
+                }
+                user.print();
             }
-
+            else if (gsonClient.startsWith("Request\n")) {
+                //TODO handle requests
+            }
         }catch (IOException e) {
+            decrementCnt();
             try {
-                System.out.println(((SocketChannel)key.channel()).getRemoteAddress()+" #DISCONNECTED# from thread"+currentThread().getId()+" ");
+                System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
                 key.channel().close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();

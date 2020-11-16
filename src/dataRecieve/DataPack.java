@@ -1,5 +1,6 @@
 package dataRecieve;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -7,22 +8,30 @@ import java.util.Date;
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class DataPack {
     private String userName;
-    Date date;
-
+    private Date creationDate;
+    private String activeWindowProcessName;
+    private int collectInterval;
     //list of programs
     private ArrayList<ProgramClass> programs;
 
+
+    public String getActiveWindowProcessName(){ return activeWindowProcessName; }
+
+    public int getCollectInterval(){ return collectInterval; }
 
     public String getUserName() {
         return userName;
     }
 
-    public Date getDate() {        return date;
-    }
+    public Date getDate() { return creationDate; }
 
     public void setUserName(String userName) {
         this.userName = userName;
     }
+
+    public void setCollectInterval(int collectInterval) { this.collectInterval = collectInterval; }
+
+    public void setActiveWindowProcessName(String activeWindowProcessName) { this.activeWindowProcessName = activeWindowProcessName; }
 
     public ArrayList<ProgramClass> getPrograms() {
         return programs;
@@ -39,16 +48,19 @@ public class DataPack {
         this.userName = userName;
     }
 
-    public DataPack(String userName,Date date, ArrayList<ProgramClass> programs)
+    public DataPack(String userName, Date creationDate, ArrayList<ProgramClass> programs)
     {
         this.userName = userName;
-        this.date=date;
+        this.creationDate = creationDate;
         this.programs = programs;
     }
 
     public void print() {
-        System.out.println("Date: " + date);
-        System.out.println("Name: " + userName);
+        System.out.println("User name: " + userName);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+        System.out.println("Date: " + formatter.format(creationDate));
+        System.out.println("Active window: " + activeWindowProcessName);
+        System.out.println("\nPrograms list:\n");
         for (ProgramClass pc : programs) {
             pc.print();
         }
