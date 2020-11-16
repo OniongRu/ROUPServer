@@ -56,15 +56,21 @@ public class Controller {
 
     private static final String stylePath = "GUI/style/";
 
-    public static int port = 5020;
+    private static int port = 5020;
+
     private static final int DEFAULTPORT = 5020;
+
+    private String bufErrorMessage = "";
 
     ThreadController thController = null;
 
     Thread connectionAcceptTh = new Thread();
 
+    private static Controller thisController = null;
+
     public Controller() {
         thController = new ThreadController();
+        thisController = this;
     }
 
     @FXML
@@ -92,6 +98,24 @@ public class Controller {
     @FXML
     private void onToggleSwitch(MouseEvent event) {
         toggleSwitch();
+    }
+
+    public static Controller getInstance() {
+        return thisController;
+    }
+
+    public void showErrorMessage(String error) {
+        if (errorMessage == null) {
+            bufErrorMessage = error;
+            return;
+        }
+        errorMessage.setText(error);
+        errorMessage.setVisible(true);
+    }
+
+    public void showErrorMessage(String error, Paint paint) {
+        errorMessage.setFill(paint);
+        showErrorMessage(error);
     }
 
     //Modified source https://gist.github.com/jonyfs/b279b5e052c3b6893a092fed79aa7fbe#file-javafxtrayiconsample-java-L86
@@ -181,8 +205,7 @@ public class Controller {
         try {
             thController.sendClose();
         }catch (IOException e){
-            errorMessage.setText("Selector is null not initialized. And could not close connection correctly");
-            errorMessage.setVisible(true);
+            showErrorMessage("Selector is null not initialized. And could not close connection correctly");
         }
         Platform.exit();
         System.exit(0);
@@ -218,15 +241,9 @@ public class Controller {
                 try {
                     thController.sendClose();
                 }catch (IOException e){
-                    errorMessage.setText("Selector is invalid. And closing connection failed");
-                    errorMessage.setVisible(true);
+                    showErrorMessage("Selector is invalid. And closing connection failed");
                 }
-                /*}catch(IOException e) {
-                    errorMessage.setText("Error in receiving data. Could not close connection correctly");
-                    errorMessage.setVisible(true);
-                }*/
-                errorMessage.setText("Can't launch server: no internet connection");
-                errorMessage.setVisible(true);
+                showErrorMessage("Can't launch server: no internet connection");
                 onTurnedOff();
             };
             connectionAcceptTh = new Thread() {
@@ -235,26 +252,22 @@ public class Controller {
                     try{
                     thController.launchService(port);
                     } catch (PrettyException e) {
-                        errorMessage.setText(e.getPrettyMessage());
-                        errorMessage.setVisible(true);
+                        showErrorMessage(e.getPrettyMessage());
                         try {
                             thController.closeService();
                         } catch (IOException ioException) {
-                            errorMessage.setText(e.getPrettyMessage() + "\n" + "Also closing connection failed");
-                            errorMessage.setVisible(true);
+                            showErrorMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
                         }
                         //System.out.println(e.toString());
                         //I hate this thing =(
                         //Was stuck here for hours
                         throw new RuntimeException();
                     }catch (RuntimeException e) {
-                        errorMessage.setText(e.getMessage());
-                        errorMessage.setVisible(true);
+                        showErrorMessage(e.getMessage());
                         try {
                             thController.closeService();
                         } catch (IOException ioException) {
-                            errorMessage.setText(e.getMessage() + "\n" + "Also closing connection failed");
-                            errorMessage.setVisible(true);
+                            showErrorMessage(e.getMessage() + "\n" + "Also closing connection failed");
                         }
                         //System.out.println(e.toString());
                         //I hate this thing =(
@@ -271,22 +284,14 @@ public class Controller {
             try {
                 thController.sendClose();
             }catch (IOException e){
-                errorMessage.setText("Selector is invalid. And closing connection failed");
-                errorMessage.setVisible(true);
+                showErrorMessage("Selector is invalid. And closing connection failed");
             }
-            /*try{
-                thController.closeService();
-            }catch (IOException e) {
-                errorMessage.setText("Could not close connection correctly");
-                errorMessage.setVisible(true);
-            }*/
         }
     }
 
     public void initialize()
     {
         titleBar.setOnMousePressed(new EventHandler<MouseEvent>() {
-
             @Override
             public void handle(MouseEvent t) {
                 mouse.setX(t.getX());
@@ -306,5 +311,6 @@ public class Controller {
                 errorMessage.setVisible(false);
             }
         });
+        showErrorMessage(bufErrorMessage);
     }
 }

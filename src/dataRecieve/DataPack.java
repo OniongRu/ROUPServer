@@ -9,10 +9,15 @@ import java.util.Date;
 public class DataPack {
     private String userName;
     private Date creationDate;
-    private String activeWindow;
+    private String activeWindowProcessName;
+    private int collectInterval;
     //list of programs
     private ArrayList<ProgramClass> programs;
 
+
+    public String getActiveWindowProcessName(){ return activeWindowProcessName; }
+
+    public int getCollectInterval(){ return collectInterval; }
 
     public String getUserName() {
         return userName;
@@ -23,6 +28,10 @@ public class DataPack {
     public void setUserName(String userName) {
         this.userName = userName;
     }
+
+    public void setCollectInterval(int collectInterval) { this.collectInterval = collectInterval; }
+
+    public void setActiveWindowProcessName(String activeWindowProcessName) { this.activeWindowProcessName = activeWindowProcessName; }
 
     public ArrayList<ProgramClass> getPrograms() {
         return programs;
@@ -50,7 +59,7 @@ public class DataPack {
         System.out.println("User name: " + userName);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
         System.out.println("Date: " + formatter.format(creationDate));
-        System.out.println("Active window: " + activeWindow);
+        System.out.println("Active window: " + activeWindowProcessName);
         System.out.println("\nPrograms list:\n");
         for (ProgramClass pc : programs) {
             pc.print();

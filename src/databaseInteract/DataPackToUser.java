@@ -19,10 +19,12 @@ public class DataPackToUser {
     public void TransformPacks() {
         while (!dataPacks.isEmpty()) {
             DataPack dp = dataPacks.peek();
-            dataPacks.remove();
             AddToUsers(dp);
+            dataPacks.remove();
         }
     }
+
+    public ArrayList<User> getUsers() { return users; }
 
     private void AddToUsers(DataPack dp) {
         User someUser = isUserInArray(dp.getUserName());
@@ -32,8 +34,11 @@ public class DataPackToUser {
             users.add(new User(dp.getUserName(), "somePas", new ArrayList<ProgramTracker>()));
             someUser = users.get(users.size() - 1);
         }
+
+        System.out.println("Collect interval: " + dp.getCollectInterval());
+
         for (ProgramClass programClass : dp.getPrograms()) {
-            someUser.addInfoAboutPrograms(dp.getDate(), programClass);
+            someUser.addInfoAboutPrograms(dp.getDate(), dp.getActiveWindowProcessName(), dp.getCollectInterval(), programClass);
         }
     }
 

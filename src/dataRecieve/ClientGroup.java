@@ -1,14 +1,21 @@
 package dataRecieve;
 
+import DBManager.DBManager;
+import GUI.Controller;
 import GUI.PrettyException;
 import com.google.gson.Gson;
+import databaseInteract.DataPackToUser;
+import databaseInteract.User;
 
+import javax.naming.ldap.Control;
 import java.io.*;
 import java.nio.*;
 import java.lang.*;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -131,6 +138,24 @@ public class ClientGroup extends Thread{
             else if (gsonClient.startsWith("Client data\n")) {
                 dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
                 System.out.println(gsonClient);
+                DataPackToUser converter = new DataPackToUser(dataPackQueue, new ArrayList<>());
+                converter.TransformPacks();
+                ArrayList<User> users = converter.getUsers();
+                DBManager manager = new DBManager();
+                try {
+                    manager.addUser(users.get(0));
+                } catch (SQLException e) {
+                    Controller.getInstance().showErrorMessage("Writing to DB failed");
+                }
+                users.get(0).print();
+                //users = new ArrayList<User>();
+                User user = null;
+                try{
+                    user = manager.getUser(0);
+                } catch (SQLException e) {
+                    Controller.getInstance().showErrorMessage("Reading from DB failed");
+                }
+                user.print();
             }
             else if (gsonClient.startsWith("Request\n")) {
                 //TODO handle requests

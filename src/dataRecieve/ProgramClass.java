@@ -9,7 +9,6 @@ public class ProgramClass {//class which contains info about program
     private int threadAmount;
     private double cpuUsage;
     private long ramUsage;
-    private Date date;
 
     public ProgramClass(String name, long ID, int threadAmount, double cpuUsage, long ramUsage, Date date) {
         this.name = name;
@@ -17,10 +16,6 @@ public class ProgramClass {//class which contains info about program
         this.threadAmount = threadAmount;
         this.cpuUsage = cpuUsage;
         this.ramUsage = ramUsage;
-        this.date =date;
-    }
-    public Date getDate() {
-        return date;
     }
 
     public String getName() {

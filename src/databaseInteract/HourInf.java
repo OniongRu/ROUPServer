@@ -23,51 +23,63 @@ public class HourInf {
         return timeActSum;
     }
 
+    public void incrementTimeActSum(int collectInterval){ timeActSum += collectInterval; }
+
     public ResourceUsage getResource() {
         return resource;
     }
 
     public Date getCreationDate() { return creationDate; }
 
+    public void print(){
+        System.out.println("Date: " + creationDate);
+        System.out.println("Datapack count: " + dataPackCount);
+        System.out.println("Time sum: " + timeSum);
+        System.out.println("Time active sum: " + timeActSum);
+        resource.print();
+        System.out.println();
+    }
+
     public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
     {
 
         this.timeSum = timeSum;
-        this.creationDate =creationDate;
+        this.creationDate = creationDate;
         this.timeActSum = timeActSum;
         this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
-        this.dataPackCount=0;
+        this.dataPackCount = 0;
     }
 
     public HourInf(int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
     {
 
         this.timeSum = 0;
-        this.creationDate =creationDate;
+        this.creationDate = creationDate;
         this.timeActSum = 0;
         this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
-        this.dataPackCount=0;
+        this.dataPackCount = 0;
     }
 
     public HourInf()
     {
-        this.timeSum=0;
-        this.timeActSum=0;
-        this.dataPackCount=0;
-        this.resource=new ResourceUsage();
+        this.timeSum = 0;
+        this.timeActSum = 0;
+        this.dataPackCount = 0;
+        this.resource = new ResourceUsage();
     }
     
     public HourInf(Date date)
     {
-        this.creationDate=date;
-        this.timeSum=0;
-        this.timeActSum=0;
-        this.dataPackCount=0;
-        this.resource=new ResourceUsage();
+        this.creationDate = date;
+        this.timeSum = 0;
+        this.timeActSum = 0;
+        this.dataPackCount = 0;
+        this.resource = new ResourceUsage();
     }
 
-    public void AddNewProgram(ProgramClass programClass){
+    public void AddNewProgram(int collectInterval, ProgramClass programClass){
         dataPackCount++;
-        resource.AddMoreInfoAbout(programClass.getThreadAmount(),programClass.getCpuUsage(),programClass.getRamUsage());
+        timeSum += collectInterval;
+        resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
     }
 }
