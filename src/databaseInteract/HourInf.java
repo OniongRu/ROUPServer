@@ -31,6 +31,11 @@ public class HourInf {
 
     public Date getCreationDate() { return creationDate; }
 
+    public int getDataPackCount(){
+        return dataPackCount;
+    }
+
+
     public void print(){
         System.out.println("Date: " + creationDate);
         System.out.println("Datapack count: " + dataPackCount);
