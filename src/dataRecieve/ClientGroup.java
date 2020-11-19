@@ -151,10 +151,15 @@ public class ClientGroup extends Thread{
                 //users = new ArrayList<User>();
                 User user = null;
                 try{
-                    user = manager.getUser(0);
+                    user = manager.getUser(76);
                 } catch (SQLException e) {
                     Controller.getInstance().showErrorMessage("Reading from DB failed");
                 }
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                System.out.println();
                 user.print();
             }
             else if (gsonClient.startsWith("Request\n")) {

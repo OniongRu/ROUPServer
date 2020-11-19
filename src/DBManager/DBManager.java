@@ -102,11 +102,11 @@ public class DBManager {
 
     public User getUser(int id) throws SQLException {
         Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE id=" + id);
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE user_id=" + id);
         if (!resultSet.next())
             throw new SQLDataException("Not exist user with id" + id);
 
-        String name = resultSet.getString(1);
+        String name = resultSet.getString(2);
         String password = resultSet.getString(3);
 
         return new User(id, name, password, getProgramsByUserId(id));
