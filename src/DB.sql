@@ -25,13 +25,13 @@ DROP TABLE IF EXISTS `hourinfo`;
 CREATE TABLE `hourinfo` (
   `resource_id` int NOT NULL AUTO_INCREMENT,
   `cpuUsage` float DEFAULT NULL,
-  `ramUsage` float DEFAULT NULL,
+  `ramUsage` bigint unsigned DEFAULT NULL,
   `program_id` int DEFAULT NULL,
   `thread_amount` int DEFAULT NULL,
   `timeActSum` int DEFAULT NULL,
   `timeSum` int DEFAULT NULL,
   `dataPackCount` int DEFAULT NULL,
-  `creationDate` datetime DEFAULT NULL,
+  `creationDate` timestamp DEFAULT NULL,
   PRIMARY KEY (`resource_id`),
   KEY `program_id` (`program_id`),
   CONSTRAINT `hourinfo_ibfk_1` FOREIGN KEY (`program_id`) REFERENCES `program` (`program_id`) ON DELETE CASCADE

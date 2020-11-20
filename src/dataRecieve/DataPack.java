@@ -1,14 +1,14 @@
 package dataRecieve;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 
 //Class which contains gets and contains info about program
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class DataPack {
     private String userName;
-    private Date creationDate;
+    private LocalDateTime creationDate;
     private String activeWindowProcessName;
     private int collectInterval;
     //list of programs
@@ -23,7 +23,7 @@ public class DataPack {
         return userName;
     }
 
-    public Date getDate() { return creationDate; }
+    public LocalDateTime getDate() { return creationDate; }
 
     public void setUserName(String userName) {
         this.userName = userName;
@@ -48,7 +48,7 @@ public class DataPack {
         this.userName = userName;
     }
 
-    public DataPack(String userName, Date creationDate, ArrayList<ProgramClass> programs)
+    public DataPack(String userName, LocalDateTime creationDate, ArrayList<ProgramClass> programs)
     {
         this.userName = userName;
         this.creationDate = creationDate;

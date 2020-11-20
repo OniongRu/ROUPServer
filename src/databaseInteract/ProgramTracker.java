@@ -2,9 +2,9 @@ package databaseInteract;
 
 import dataRecieve.ProgramClass;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 //In construction. Not working yet
 public class ProgramTracker {
@@ -12,6 +12,7 @@ public class ProgramTracker {
     private String name;
     private ArrayList<HourInf> HourWork;
 
+    //TODO - change array list to set here for a quicker access to a specified hour. Maybe do the same with programTracker in users
     public ArrayList<HourInf> getHourWork() {  return HourWork;   }
 
     public void print(){
@@ -23,13 +24,15 @@ public class ProgramTracker {
         System.out.println("---------");
     }
 
-    public void addNewProgram(Date date, String activeWindowProcessName, int collectInterval, ProgramClass programClass)
+    public void addNewProgram(LocalDateTime date, String activeWindowProcessName, int collectInterval, ProgramClass programClass)
     {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
+        date = date.minusMinutes(date.getMinute());
+        date = date.minusSeconds(date.getSecond());
+        /*calendar.setTime(date);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        date = calendar.getTime();
+        date = calendar.getTime();*/
         HourInf someHour = isHourInArray(date);
         if(someHour == null) {
             HourWork.add(new HourInf(date));
@@ -52,7 +55,6 @@ public class ProgramTracker {
         return name;
     }
 
-
     public ProgramTracker(long ID, String name)
     {
         this.ID = ID;
@@ -67,7 +69,7 @@ public class ProgramTracker {
         this.HourWork = hourInf;
     }
 
-    private HourInf isHourInArray(Date date)
+    private HourInf isHourInArray(LocalDateTime date)
     {
         for (HourInf hour: HourWork) {
             if(hour.getCreationDate().equals(date)) {
@@ -75,5 +77,11 @@ public class ProgramTracker {
             }
         }
         return null;
+    }
+
+    public void finalizeObservations() {
+        for (HourInf programHourInfo : HourWork){
+            programHourInfo.finalizeObservations();
+        }
     }
 }
