@@ -2,14 +2,15 @@ package databaseInteract;
 
 
 import dataRecieve.ProgramClass;
-import java.util.Date;
+
+import java.time.LocalDateTime;
 
 
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class HourInf {
     //DateFormat outputformat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 
-    private Date creationDate;
+    private LocalDateTime creationDate;
     private int dataPackCount;
     private int timeSum;
     private int timeActSum;
@@ -29,7 +30,7 @@ public class HourInf {
         return resource;
     }
 
-    public Date getCreationDate() { return creationDate; }
+    public LocalDateTime getCreationDate() { return creationDate; }
 
     public int getDataPackCount(){
         return dataPackCount;
@@ -45,7 +46,7 @@ public class HourInf {
         System.out.println();
     }
 
-    public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
+    public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, LocalDateTime creationDate)
     {
 
         this.timeSum = timeSum;
@@ -55,7 +56,7 @@ public class HourInf {
         this.dataPackCount = 0;
     }
 
-    public HourInf(int threadAmount, double cpuUsage, long ramUsage, Date creationDate)
+    public HourInf(int threadAmount, double cpuUsage, long ramUsage, LocalDateTime creationDate)
     {
 
         this.timeSum = 0;
@@ -73,7 +74,7 @@ public class HourInf {
         this.resource = new ResourceUsage();
     }
     
-    public HourInf(Date date)
+    public HourInf(LocalDateTime date)
     {
         this.creationDate = date;
         this.timeSum = 0;
@@ -86,5 +87,11 @@ public class HourInf {
         dataPackCount++;
         timeSum += collectInterval;
         resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
+    }
+
+    public void finalizeObservations() {
+        this.timeSum /= dataPackCount;
+        this.timeActSum /= dataPackCount;
+        this.resource.finalizeObservations(dataPackCount);
     }
 }

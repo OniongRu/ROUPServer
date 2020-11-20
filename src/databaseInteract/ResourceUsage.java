@@ -31,17 +31,20 @@ public class ResourceUsage {
         this.ramUsage += ramUsage;
     }
 
-    public int get_threadAmount()
+    public int getThreadAmount()
     {
         return threadAmount;
     }
-    public double get_cpuUsage()
-    {
-        return cpuUsage;
-    }
-    public long get_ramUsage ()
+    public double getCpuUsage() { return cpuUsage; }
+    public long getRamUsage()
     {
         return ramUsage;
+    }
+
+    public void finalizeObservations(int dataPackCount) {
+        this.threadAmount /= dataPackCount;
+        this.ramUsage /= dataPackCount;
+        this.cpuUsage /= dataPackCount;
     }
 
 }

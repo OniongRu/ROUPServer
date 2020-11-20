@@ -2,8 +2,8 @@ package databaseInteract;
 
 import dataRecieve.ProgramClass;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 
 //In construction. Not working yet
 public class User {
@@ -53,7 +53,7 @@ public class User {
         this.Programs = Programs;
     }
 
-    public void addInfoAboutPrograms(Date date, String activeWindowProcessName, int collectInterval, ProgramClass program){
+    public void addInfoAboutPrograms(LocalDateTime date, String activeWindowProcessName, int collectInterval, ProgramClass program){
         for(ProgramTracker prog: Programs)
         {
             if(prog.getName().equals(program.getName())){
@@ -64,5 +64,11 @@ public class User {
 
         Programs.add(new ProgramTracker(program.getID(), program.getName()));
         Programs.get(Programs.size() - 1).addNewProgram(date, activeWindowProcessName, collectInterval, program);
+    }
+
+    public void finalizeObservations() {
+        for (ProgramTracker program : Programs) {
+            program.finalizeObservations();
+        }
     }
 }

@@ -8,9 +8,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Properties;
 
 public class DBManager {
@@ -50,11 +51,19 @@ public class DBManager {
     public void addHourInf(HourInf hourInf, String program_name) throws SQLException {
         Statement statement = conn.createStatement();
         ResourceUsage resource = hourInf.getResource();
+        //TODO - form correct query string
+        /*String query = String.format(
+                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum,dataPackCount, creationDate)\n" +
+                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d, %s)",
+                (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
+                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(), hourInf.getCreationDate());*/
+
         String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id,thread_amount,timeActSum,timeSum,dataPackCount, creationDate)\n" +
-                        "VALUES (%d, %d , (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d,'%s')",
-                resource.get_cpuUsage(), resource.get_ramUsage(), program_name, resource.get_threadAmount(),
-                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(), hourInf.getCreationDate());
+                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum,dataPackCount, creationDate)\n" +
+                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d, %s)",
+                (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
+                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(),  java.sql.Timestamp.valueOf(hourInf.getCreationDate()));
+
         int rows = statement.executeUpdate(query);
         System.out.printf("Added %d rows at table resourceUsage\n", rows);
     }
@@ -62,7 +71,7 @@ public class DBManager {
     public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM resourceUsage WHERE program_id=" + id_p);
-        ArrayList<HourInf> hourInfs = new ArrayList<>();
+        ArrayList<HourInf> hourInfo = new ArrayList<>();
 
         while (resultSet.next()) {
             double cpu = resultSet.getDouble(2);
@@ -70,10 +79,11 @@ public class DBManager {
             int thread = resultSet.getInt(5);
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
-            Date creationDate = resultSet.getDate(9);
-            hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, creationDate));
+            java.sql.Date creationDate = resultSet.getDate(9);
+            LocalDateTime localCreationDate = creationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            hourInfo.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, localCreationDate));
         }
-        return hourInfs;
+        return hourInfo;
     }
 
     public ArrayList<ProgramTracker> getProgramsByUserId(int id_u) throws SQLException {

@@ -1,8 +1,5 @@
 package dataRecieve;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class ProgramClass {//class which contains info about program
     private String name;
     private long ID;
@@ -10,7 +7,7 @@ public class ProgramClass {//class which contains info about program
     private double cpuUsage;
     private long ramUsage;
 
-    public ProgramClass(String name, long ID, int threadAmount, double cpuUsage, long ramUsage, Date date) {
+    public ProgramClass(String name, long ID, int threadAmount, double cpuUsage, long ramUsage) {
         this.name = name;
         this.ID = ID;
         this.threadAmount = threadAmount;
