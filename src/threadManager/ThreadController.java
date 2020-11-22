@@ -1,9 +1,13 @@
 package threadManager;
 
+import DBManager.DBManager;
+import GUI.Controller;
 import GUI.PrettyException;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
-import databaseInteract.DatabaseWriter;
+import databaseInteract.DataPackToUser;
+import databaseInteract.HourInf;
+import databaseInteract.ProgramTracker;
 import databaseInteract.User;
 
 import java.io.IOException;
@@ -14,119 +18,29 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class ThreadController {
     Selector sSelector = null;
     ServerSocketChannel sChannel = null;
     public static ArrayList<ClientGroup> serverList = null;
     private boolean isServerToggledOff = true;
+    private Queue<DataPack> dataPackQueue = new LinkedList<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    ScheduledFuture<?> writerHandle = null;
 
-    private Queue<DataPack> dataPackQueue = new Queue<DataPack>() {
-        @Override
-        public boolean add(DataPack dataPack) {
-            return false;
-        }
-
-        @Override
-        public boolean offer(DataPack dataPack) {
-            return false;
-        }
-
-        @Override
-        public DataPack remove() {
-            return null;
-        }
-
-        @Override
-        public DataPack poll() {
-            return null;
-        }
-
-        @Override
-        public DataPack element() {
-            return null;
-        }
-
-        @Override
-        public DataPack peek() {
-            return null;
-        }
-
-        @Override
-        public int size() {
-            return 0;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return false;
-        }
-
-        @Override
-        public boolean contains(Object o) {
-            return false;
-        }
-
-        @Override
-        public Iterator<DataPack> iterator() {
-            return null;
-        }
-
-        @Override
-        public Object[] toArray() {
-            return new Object[0];
-        }
-
-        @Override
-        public <T> T[] toArray(T[] a) {
-            return null;
-        }
-
-        @Override
-        public boolean remove(Object o) {
-            return false;
-        }
-
-        @Override
-        public boolean containsAll(Collection<?> c) {
-            return false;
-        }
-
-        @Override
-        public boolean addAll(Collection<? extends DataPack> c) {
-            return false;
-        }
-
-        @Override
-        public boolean removeAll(Collection<?> c) {
-            return false;
-        }
-
-        @Override
-        public boolean retainAll(Collection<?> c) {
-            return false;
-        }
-
-        @Override
-        public void clear() {
-
-        }
-    };
-
-    private ArrayList<User> usersToBD = new ArrayList<>();
-
-    DatabaseWriter databaseWriter = new DatabaseWriter(usersToBD, dataPackQueue);
-
-
-    public ThreadController() {
-    }
-
-    public boolean getIsServerToggledOff() {
+    public boolean getIsServerToggledOff(){
         return isServerToggledOff;
     }
 
-    public void setIsServerToggledOff(boolean isServerToggledOff) {
+    public void setIsServerToggledOff(boolean isServerToggledOff){
         this.isServerToggledOff = isServerToggledOff;
     }
 
@@ -159,10 +73,50 @@ public class ThreadController {
         }
     }
 
-    public void launchService(final int PORT) throws PrettyException, RuntimeException{
+    public void writeUsersToDB() {
+        final Runnable databaseWriter = new Runnable() {
+            public void run() {
+                DataPackToUser converter = new DataPackToUser(dataPackQueue, new ArrayList<>());
+                converter.TransformPacks();
+                ArrayList<User> users = converter.getUsers();
+                DBManager manager = new DBManager();
+                for (User user : users) {
+                    user.finalizeObservations();
+                    user.print();
+                    try {
+                        manager.addUser(user);
+                        for (ProgramTracker program : user.getPrograms()) {
+                            manager.addProgram(program, user.getName());
+                            for (HourInf programHourWork : program.getHourWork()){
+                                manager.addHourInf(programHourWork, program.getName());
+                            }
+                        }
+
+                    } catch (SQLException e) {
+                        Controller.getInstance().showErrorMessage("Writing to DB failed");
+                    }
+                }
+                /*User user = null;
+                try{
+                    user = manager.getUser(76);
+                } catch (SQLException e) {
+                    Controller.getInstance().showErrorMessage("Reading from DB failed");
+                }
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                System.out.println();
+                System.out.println("''''''''''Read user 76 from database''''''''''''");
+                user.print();*/
+            }
+        };
+
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 10, 10, SECONDS);
+    }
+
+    public void launchService(final int PORT) throws PrettyException, RuntimeException {
         isServerToggledOff = false;
         serverList = new ArrayList<>();
-        databaseWriter.start();
         try {
             sChannel = ServerSocketChannel.open();
             sChannel.configureBlocking(false);
@@ -173,7 +127,7 @@ public class ThreadController {
         }catch(IOException e){
             throw new PrettyException(e, "Can't launch: fail opening connection");
         }
-
+        writeUsersToDB();
         while(true) {
             try {
                 sSelector.select();
@@ -182,6 +136,9 @@ public class ThreadController {
             }
             Set<SelectionKey> selectedKeys = sSelector.selectedKeys();
             if (isServerToggledOff){
+                if (writerHandle != null) {
+                    scheduler.execute(() -> writerHandle.cancel(false));
+                }
                 try {
                     closeService();
                 }catch (IOException e){
@@ -241,6 +198,5 @@ public class ThreadController {
             closeService();
         }
     }
-
 
 }

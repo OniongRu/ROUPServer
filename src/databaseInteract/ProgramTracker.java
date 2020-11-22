@@ -1,12 +1,10 @@
 package databaseInteract;
 
-import DBManager.DBManager;
 import dataRecieve.ProgramClass;
 
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 //In construction. Not working yet
 public class ProgramTracker {
@@ -14,19 +12,27 @@ public class ProgramTracker {
     private String name;
     private ArrayList<HourInf> HourWork;
 
-    public ArrayList<HourInf> getHourWork() {
-        return HourWork;
+    //TODO - change array list to set here for a quicker access to a specified hour. Maybe do the same with programTracker in users
+    public ArrayList<HourInf> getHourWork() {  return HourWork;   }
+
+    public void print(){
+        System.out.println("Program ID: " + ID);
+        System.out.println("Program name: " + name);
+        for (HourInf hourProgramInfo : HourWork){
+            hourProgramInfo.print();
+        }
+        System.out.println("---------");
     }
 
-    public void addNewProgram(Date date, ProgramClass programClass, String activeWindow) {
+    public void addNewProgram(LocalDateTime date, String activeWindowProcessName, int collectInterval, ProgramClass programClass)
+    {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
+        date = date.minusMinutes(date.getMinute());
+        date = date.minusSeconds(date.getSecond());
+        /*calendar.setTime(date);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
-        date = calendar.getTime();
-        //date.setMinutes(0);
-        //date.setSeconds(0);
-        assert date.getMinutes() != 0 || date.getSeconds() != 0;
+        date = calendar.getTime();*/
         HourInf someHour = isHourInArray(date);
         if(someHour == null) {
             HourWork.add(new HourInf(date));
@@ -34,7 +40,10 @@ public class ProgramTracker {
         }
         this.name = programClass.getName();
         this.ID = programClass.getID();
-        someHour.AddNewProgram(programClass, activeWindow);
+        someHour.AddNewProgram(collectInterval, programClass);
+        if (activeWindowProcessName.equals(name)){
+            someHour.incrementTimeActSum(collectInterval);
+        }
     }
 
 
@@ -45,7 +54,6 @@ public class ProgramTracker {
     public String getName() {
         return name;
     }
-
 
     public ProgramTracker(long ID, String name)
     {
@@ -61,19 +69,19 @@ public class ProgramTracker {
         this.HourWork = hourInf;
     }
 
-    private HourInf isHourInArray(Date date) {
-        for (HourInf hour : HourWork) {
-            if (hour.getCreationDate().equals(date)) {
+    private HourInf isHourInArray(LocalDateTime date)
+    {
+        for (HourInf hour: HourWork) {
+            if(hour.getCreationDate().equals(date)) {
                 return hour;
             }
         }
         return null;
     }
 
-    public void normalizeHourInf(DBManager dbManager) throws SQLException {
-        for (HourInf hourInf : HourWork) {
-            hourInf.normalizeHourInf();
-            dbManager.addResourceUsage(hourInf.getResource(), this.ID);
+    public void finalizeObservations() {
+        for (HourInf programHourInfo : HourWork){
+            programHourInfo.finalizeObservations();
         }
     }
 }
