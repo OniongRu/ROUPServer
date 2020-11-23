@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
@@ -40,7 +41,7 @@ public class DBManager {
     public void addProgram(ProgramTracker program, String user_name) throws SQLException {
         Statement statement = conn.createStatement();
         String query = String.format(
-                "INSERT INTO program (program_name, user_id)  \n" +
+                "INSERT INTO program (program_name, user_id) " +
                         "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
                 program.getName(), user_name);
         int rows = statement.executeUpdate(query);
@@ -48,15 +49,21 @@ public class DBManager {
     }
 
     public void addHourInf(HourInf hourInf, String program_name) throws SQLException {
-        Statement statement = conn.createStatement();
         ResourceUsage resource = hourInf.getResource();
-        String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id,thread_amount,timeActSum,timeSum,dataPackCount, creationDate)\n" +
-                        "VALUES (%d, %d , (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d,'%s')",
-                resource.get_cpuUsage(), resource.get_ramUsage(), program_name, resource.get_threadAmount(),
-                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(), hourInf.getCreationDate());
-        int rows = statement.executeUpdate(query);
-        System.out.printf("Added %d rows at table resourceUsage\n", rows);
+        String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id,thread_amount,timeActSum,timeSum,dataPackCount, creationDate) " +
+                "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=?), ?, ?, ?, ?, ?)";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setDouble(1, resource.get_cpuUsage());
+            preparedStatement.setLong(2, resource.get_ramUsage());
+            preparedStatement.setString(3, program_name);
+            preparedStatement.setInt(4, resource.get_threadAmount());
+            preparedStatement.setInt(5, hourInf.getTimeActSum());
+            preparedStatement.setInt(6, hourInf.getTimeSum());
+            preparedStatement.setInt(7, hourInf.getDataPackCount());
+            preparedStatement.setTimestamp(8, new Timestamp(hourInf.getCreationDate().getTime()));
+            int rows = preparedStatement.executeUpdate();
+            System.out.printf("Added %d rows at table resourceUsage\n", rows);
+        }
     }
 
     public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
@@ -70,8 +77,8 @@ public class DBManager {
             int thread = resultSet.getInt(5);
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
-            Date creationDate = resultSet.getDate(9);
-            hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, creationDate));
+            Timestamp creationDate = resultSet.getTimestamp(9);
+            hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, new LocalDateTime(creationDate.getTime())));
         }
         return hourInfs;
     }
@@ -102,11 +109,11 @@ public class DBManager {
 
     public User getUser(int id) throws SQLException {
         Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE id=" + id);
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE user_id=" + id);
         if (!resultSet.next())
             throw new SQLDataException("Not exist user with id" + id);
 
-        String name = resultSet.getString(1);
+        String name = resultSet.getString(2);
         String password = resultSet.getString(3);
 
         return new User(id, name, password, getProgramsByUserId(id));
