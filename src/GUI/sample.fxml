@@ -34,7 +34,7 @@
                      </HBox.margin>
                   </Text>
                   <Separator prefHeight="65.0" prefWidth="290.0" visible="false" />
-                  <ImageView fx:id="minimizeButton" fitHeight="30.0" fitWidth="30.0" onMouseReleased="#onMinimizeReleased">
+                  <ImageView fx:id="minimizeButton" fitHeight="30.0" fitWidth="30.0" onMouseClicked="#onMinimizeClicked">
                      <image>
                         <Image url="@style/minimizeButton.png" />
                      </image>
@@ -42,7 +42,7 @@
                         <Cursor fx:constant="DEFAULT" />
                      </cursor>
                   </ImageView>
-                  <ImageView fx:id="closeButton" fitHeight="30.0" fitWidth="30.0" onMouseReleased="#onCloseReleased">
+                  <ImageView fx:id="closeButton" fitHeight="30.0" fitWidth="30.0" onMouseClicked="#onCloseClicked">
                      <image>
                         <Image url="@style/closeButton.png" />
                      </image>

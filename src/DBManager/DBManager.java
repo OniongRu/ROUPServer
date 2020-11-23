@@ -53,16 +53,16 @@ public class DBManager {
         ResourceUsage resource = hourInf.getResource();
         //TODO - form correct query string
         /*String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum,dataPackCount, creationDate)\n" +
+                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate)\n" +
                         "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d, %s)",
                 (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
                 hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(), hourInf.getCreationDate());*/
 
         String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum,dataPackCount, creationDate)\n" +
-                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d, %s)",
+                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount)\n" +
+                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d)",
                 (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
-                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(),  java.sql.Timestamp.valueOf(hourInf.getCreationDate()));
+                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount());//,  java.sql.Timestamp.valueOf(hourInf.getCreationDate()));
 
         int rows = statement.executeUpdate(query);
         System.out.printf("Added %d rows at table resourceUsage\n", rows);
