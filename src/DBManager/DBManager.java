@@ -11,7 +11,6 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Properties;
 
 public class DBManager {
@@ -69,7 +68,7 @@ public class DBManager {
     public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM resourceUsage WHERE program_id=" + id_p);
-        ArrayList<HourInf> hourInfs = new ArrayList<>();
+        ArrayList<HourInf> hourInfo = new ArrayList<>();
 
         while (resultSet.next()) {
             double cpu = resultSet.getDouble(2);
@@ -80,7 +79,7 @@ public class DBManager {
             Timestamp creationDate = resultSet.getTimestamp(9);
             hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, new LocalDateTime(creationDate.getTime())));
         }
-        return hourInfs;
+        return hourInfo;
     }
 
     public ArrayList<ProgramTracker> getProgramsByUserId(int id_u) throws SQLException {

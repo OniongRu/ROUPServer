@@ -60,7 +60,7 @@ public class Controller {
 
     private static final int DEFAULTPORT = 5020;
 
-    private String bufErrorMessage = "";
+    private String bufErrorMessage = null;
 
     ThreadController thController = null;
 
@@ -102,6 +102,14 @@ public class Controller {
 
     public static Controller getInstance() {
         return thisController;
+    }
+
+    public String getBufErrorMessage() {
+        return bufErrorMessage;
+    }
+
+    public void setBufErrorMessage(String buff) {
+        bufErrorMessage = buff;
     }
 
     public void showErrorMessage(String error) {
@@ -305,12 +313,12 @@ public class Controller {
                 titleBar.getScene().getWindow().setY(t.getScreenY() - mouse.getY());
             }
         });
+
         pane.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent t) {
                 errorMessage.setVisible(false);
             }
         });
-        showErrorMessage(bufErrorMessage);
     }
 }

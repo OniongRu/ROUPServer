@@ -2,9 +2,7 @@ package databaseInteract;
 
 import dataRecieve.DataPack;
 import dataRecieve.ProgramClass;
-
 import java.util.ArrayList;
-
 import java.util.Queue;
 
 public class DataPackToUser {
@@ -40,6 +38,7 @@ public class DataPackToUser {
         for (ProgramClass programClass : dp.getPrograms()) {
             someUser.addInfoAboutPrograms(dp.getDate(), dp.getActiveWindowProcessName(), dp.getCollectInterval(), programClass);
         }
+        someUser.setID(10);
     }
 
     private User isUserInArray(String userName) {

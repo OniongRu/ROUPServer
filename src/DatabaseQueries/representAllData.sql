@@ -1,0 +1,1 @@
+select test.users.*, test.program.*, test.hourinfo.*  from test.users, test.program, test.hourinfo where test.users.user_id = test.program.user_id and test.program.program_id = test.hourinfo.program_id order by test.users.user_id;
