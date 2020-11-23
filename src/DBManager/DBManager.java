@@ -8,9 +8,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -41,7 +40,7 @@ public class DBManager {
     public void addProgram(ProgramTracker program, String user_name) throws SQLException {
         Statement statement = conn.createStatement();
         String query = String.format(
-                "INSERT INTO program (program_name, user_id)  \n" +
+                "INSERT INTO program (program_name, user_id) " +
                         "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
                 program.getName(), user_name);
         int rows = statement.executeUpdate(query);
@@ -49,23 +48,21 @@ public class DBManager {
     }
 
     public void addHourInf(HourInf hourInf, String program_name) throws SQLException {
-        Statement statement = conn.createStatement();
         ResourceUsage resource = hourInf.getResource();
-        //TODO - form correct query string
-        /*String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate)\n" +
-                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d, %s)",
-                (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
-                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount(), hourInf.getCreationDate());*/
-
-        String query = String.format(
-                "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount)\n" +
-                        "VALUES (%f, %d, (SELECT program_id FROM program WHERE program_name='%s'), %d, %d, %d, %d)",
-                (float)resource.getCpuUsage(), resource.getRamUsage(), program_name, resource.getThreadAmount(),
-                hourInf.getTimeActSum(), hourInf.getTimeSum(), hourInf.getDataPackCount());//,  java.sql.Timestamp.valueOf(hourInf.getCreationDate()));
-
-        int rows = statement.executeUpdate(query);
-        System.out.printf("Added %d rows at table resourceUsage\n", rows);
+        String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id,thread_amount,timeActSum,timeSum,dataPackCount, creationDate) " +
+                "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=?), ?, ?, ?, ?, ?)";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setDouble(1, resource.get_cpuUsage());
+            preparedStatement.setLong(2, resource.get_ramUsage());
+            preparedStatement.setString(3, program_name);
+            preparedStatement.setInt(4, resource.get_threadAmount());
+            preparedStatement.setInt(5, hourInf.getTimeActSum());
+            preparedStatement.setInt(6, hourInf.getTimeSum());
+            preparedStatement.setInt(7, hourInf.getDataPackCount());
+            preparedStatement.setTimestamp(8, new Timestamp(hourInf.getCreationDate().getTime()));
+            int rows = preparedStatement.executeUpdate();
+            System.out.printf("Added %d rows at table resourceUsage\n", rows);
+        }
     }
 
     public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
@@ -79,9 +76,8 @@ public class DBManager {
             int thread = resultSet.getInt(5);
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
-            java.sql.Date creationDate = resultSet.getDate(9);
-            LocalDateTime localCreationDate = creationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            hourInfo.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, localCreationDate));
+            Timestamp creationDate = resultSet.getTimestamp(9);
+            hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, new LocalDateTime(creationDate.getTime())));
         }
         return hourInfo;
     }
