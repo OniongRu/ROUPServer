@@ -3,6 +3,7 @@ package threadManager;
 import DBManager.DBManager;
 import GUI.Controller;
 import GUI.PrettyException;
+import com.google.gson.*;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
 import databaseInteract.DataPackToUser;
@@ -11,6 +12,7 @@ import databaseInteract.ProgramTracker;
 import databaseInteract.User;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
@@ -19,6 +21,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -80,6 +85,16 @@ public class ThreadController {
                 converter.TransformPacks();
                 ArrayList<User> users = converter.getUsers();
                 DBManager manager = new DBManager();
+
+                Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                    @Override
+                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+                        return new JsonPrimitive(formatter.format(src));
+                    }
+                }).create();
+
+                String gooseJson = gson.toJson(users);
                 for (User user : users) {
                     user.finalizeObservations();
                     user.print();
@@ -111,7 +126,7 @@ public class ThreadController {
             }
         };
 
-        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 10, 10, SECONDS);
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 60, 60, SECONDS);
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {

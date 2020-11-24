@@ -29,19 +29,15 @@ public class ProgramTracker {
         Calendar calendar = Calendar.getInstance();
         date = date.minusMinutes(date.getMinute());
         date = date.minusSeconds(date.getSecond());
-        /*calendar.setTime(date);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        date = calendar.getTime();*/
         HourInf someHour = isHourInArray(date);
         if(someHour == null) {
             HourWork.add(new HourInf(date));
-            someHour = HourWork.get(HourWork.size()-1);
+            someHour = HourWork.get(HourWork.size() - 1);
         }
         this.name = programClass.getName();
         this.ID = programClass.getID();
         someHour.AddNewProgram(collectInterval, programClass);
-        if (activeWindowProcessName.equals(name)){
+        if (activeWindowProcessName.equals(name)) {
             someHour.incrementTimeActSum(collectInterval);
         }
     }

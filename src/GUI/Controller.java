@@ -224,8 +224,18 @@ public class Controller {
         statusText.setText("Turn off");
         toggleButton.setImage(new Image(stylePath + "turnOnButtonSmall.png"));
         nameField.setDisable(true);
-        if (!portField.getText().equals(""))
-            port = Integer.parseInt(portField.getText());
+        if (!portField.getText().equals("")) {
+            try {
+                port = Integer.parseInt(portField.getText());
+            } catch (NumberFormatException e) {
+                port = DEFAULTPORT;
+                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
+            }
+            if (port > 65535 || port <= 1024) {
+                port = DEFAULTPORT;
+                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
+            }
+        }
         else{
             port = DEFAULTPORT;
         }
@@ -291,7 +301,7 @@ public class Controller {
             onTurnedOff();
             try {
                 thController.sendClose();
-            }catch (IOException e){
+            }catch (IOException e) {
                 showErrorMessage("Selector is invalid. And closing connection failed");
             }
         }

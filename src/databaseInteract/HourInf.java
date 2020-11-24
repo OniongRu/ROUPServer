@@ -90,8 +90,6 @@ public class HourInf {
     }
 
     public void finalizeObservations() {
-        this.timeSum /= dataPackCount;
-        this.timeActSum /= dataPackCount;
         this.resource.finalizeObservations(dataPackCount);
     }
 }

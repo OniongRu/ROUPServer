@@ -9,9 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.TimeZone;
 
 public class DBManager {
 
@@ -49,17 +51,17 @@ public class DBManager {
 
     public void addHourInf(HourInf hourInf, String program_name) throws SQLException {
         ResourceUsage resource = hourInf.getResource();
-        String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id,thread_amount,timeActSum,timeSum,dataPackCount, creationDate) " +
+        String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate) " +
                 "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=?), ?, ?, ?, ?, ?)";
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-            preparedStatement.setDouble(1, resource.get_cpuUsage());
-            preparedStatement.setLong(2, resource.get_ramUsage());
+            preparedStatement.setDouble(1, resource.getCpuUsage());
+            preparedStatement.setLong(2, resource.getRamUsage());
             preparedStatement.setString(3, program_name);
-            preparedStatement.setInt(4, resource.get_threadAmount());
+            preparedStatement.setInt(4, resource.getThreadAmount());
             preparedStatement.setInt(5, hourInf.getTimeActSum());
             preparedStatement.setInt(6, hourInf.getTimeSum());
             preparedStatement.setInt(7, hourInf.getDataPackCount());
-            preparedStatement.setTimestamp(8, new Timestamp(hourInf.getCreationDate().getTime()));
+            preparedStatement.setTimestamp(8, Timestamp.valueOf(hourInf.getCreationDate()));
             int rows = preparedStatement.executeUpdate();
             System.out.printf("Added %d rows at table resourceUsage\n", rows);
         }
@@ -77,7 +79,7 @@ public class DBManager {
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
             Timestamp creationDate = resultSet.getTimestamp(9);
-            hourInfs.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, new LocalDateTime(creationDate.getTime())));
+            hourInfo.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId())));
         }
         return hourInfo;
     }
