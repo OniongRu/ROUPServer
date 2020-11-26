@@ -1,6 +1,7 @@
 package GUI;
 
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -46,7 +47,7 @@ public class Controller {
     private ImageView toggleButton;
 
     @FXML
-    private Text errorMessage;
+    private Text errorMessage = new Text();
 
     private Stage window;
 
@@ -108,21 +109,19 @@ public class Controller {
         return bufErrorMessage;
     }
 
-    public void setBufErrorMessage(String buff) {
-        bufErrorMessage = buff;
-    }
+    public void setBufErrorMessage(String buff) { bufErrorMessage = buff; }
 
     public void showErrorMessage(String error) {
-        if (errorMessage == null) {
-            bufErrorMessage = error;
-            return;
+        if (errorMessage != null) {
+            errorMessage.setText(error);
+            errorMessage.setVisible(true);
         }
-        errorMessage.setText(error);
-        errorMessage.setVisible(true);
     }
 
     public void showErrorMessage(String error, Paint paint) {
-        errorMessage.setFill(paint);
+        if (errorMessage != null) {
+            errorMessage.setFill(paint);
+        }
         showErrorMessage(error);
     }
 
@@ -219,6 +218,7 @@ public class Controller {
         System.exit(0);
     }
 
+    //GUI changes when big orange button is pressed
     public void onTurnedOn(){
         statusText.setFill(Paint.valueOf("#9de05c"));
         statusText.setText("Turn off");
@@ -242,6 +242,7 @@ public class Controller {
         portField.setDisable(true);
     }
 
+    //GUI changes when big green button is pressed
     public void onTurnedOff(){
         statusText.setFill(Paint.valueOf("#f8902f"));
         statusText.setText("Turn on");
@@ -250,47 +251,37 @@ public class Controller {
         portField.setDisable(false);
     }
 
-    private void toggleSwitch()
-    {
+    private void toggleSwitch() {
         if (thController.getIsServerToggledOff()) {
             onTurnedOn();
             Thread.UncaughtExceptionHandler h = (th, ex) -> {
-                //try {
                 try {
                     thController.sendClose();
+                    showErrorMessage("Uncaught error");
                 }catch (IOException e){
-                    showErrorMessage("Selector is invalid. And closing connection failed");
+                    showErrorMessage("Uncaught error\nClosing connection failed");
                 }
-                showErrorMessage("Can't launch server: no internet connection");
                 onTurnedOff();
             };
             connectionAcceptTh = new Thread() {
                 @Override
                 public void run() {
                     try{
-                    thController.launchService(port);
+                        thController.launchService(port);
                     } catch (PrettyException e) {
                         showErrorMessage(e.getPrettyMessage());
                         try {
-                            thController.closeService();
-                        } catch (IOException ioException) {
+                            thController.sendClose();
+                            onTurnedOff();
+                        } catch (IOException exception) {
                             showErrorMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
+                        } catch (Exception unusualException) {
+                            throw new RuntimeException();
                         }
                         //System.out.println(e.toString());
                         //I hate this thing =(
                         //Was stuck here for hours
-                        throw new RuntimeException();
-                    }catch (RuntimeException e) {
-                        showErrorMessage(e.getMessage());
-                        try {
-                            thController.closeService();
-                        } catch (IOException ioException) {
-                            showErrorMessage(e.getMessage() + "\n" + "Also closing connection failed");
-                        }
-                        //System.out.println(e.toString());
-                        //I hate this thing =(
-                        //Was stuck here for hours
-                        throw new RuntimeException();
+                        //throw new RuntimeException();
                     }
                 }
             };

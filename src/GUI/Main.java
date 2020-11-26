@@ -17,10 +17,9 @@ public class Main extends Application {
     private static Controller controller;
     private static final String stylePath = "GUI/style/";
 
-    @Override public void start(Stage primaryStage) throws Exception {
+    @Override public void start(Stage window) throws Exception {
         Platform.setImplicitExit(false);
         Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
-        window = primaryStage;
         window.getIcons().add(new Image(stylePath + "knifeGoose.png"));
         window.initStyle(StageStyle.TRANSPARENT);
 
@@ -35,7 +34,15 @@ public class Main extends Application {
             }
         });
 
-        controller = new Controller();
+        /*window.setOnShown(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                controller.showErrorMessage();
+            }
+        });*/
+
+        //controller = new Controller();
+        //controller.setBufErrorMessage("AA!");
         window.show();
     }
 

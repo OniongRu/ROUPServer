@@ -8,14 +8,16 @@ import java.util.ArrayList;
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class DataPack {
     private String userName;
+    private byte[] securedPassword;
     private LocalDateTime creationDate;
     private String activeWindowProcessName;
     private int collectInterval;
     //list of programs
     private ArrayList<ProgramClass> programs;
 
-
     public String getActiveWindowProcessName(){ return activeWindowProcessName; }
+
+    public byte[] getPassword() { return securedPassword; }
 
     public int getCollectInterval(){ return collectInterval; }
 
@@ -25,34 +27,8 @@ public class DataPack {
 
     public LocalDateTime getDate() { return creationDate; }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public void setCollectInterval(int collectInterval) { this.collectInterval = collectInterval; }
-
-    public void setActiveWindowProcessName(String activeWindowProcessName) { this.activeWindowProcessName = activeWindowProcessName; }
-
     public ArrayList<ProgramClass> getPrograms() {
         return programs;
-    }
-
-    //this is Constructor👍🏻
-    public DataPack()
-    {
-        programs = new ArrayList<>();
-    }
-
-    public DataPack(String userName)
-    {
-        this.userName = userName;
-    }
-
-    public DataPack(String userName, LocalDateTime creationDate, ArrayList<ProgramClass> programs)
-    {
-        this.userName = userName;
-        this.creationDate = creationDate;
-        this.programs = programs;
     }
 
     public void print() {

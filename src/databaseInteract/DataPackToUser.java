@@ -3,13 +3,14 @@ package databaseInteract;
 import dataRecieve.DataPack;
 import dataRecieve.ProgramClass;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Queue;
 
 public class DataPackToUser {
     Queue<DataPack> dataPacks;
-    ArrayList<User> users;
+    Map<String, User> users;
 
-    public DataPackToUser(Queue<DataPack> dataPacks, ArrayList<User> users) {
+    public DataPackToUser(Queue<DataPack> dataPacks, Map<String, User> users) {
         this.dataPacks = dataPacks;
         this.users = users;
     }
@@ -22,32 +23,18 @@ public class DataPackToUser {
         }
     }
 
-    public ArrayList<User> getUsers() { return users; }
+    public Map<String, User> getUsers() { return users; }
 
     private void AddToUsers(DataPack dp) {
-        User someUser = isUserInArray(dp.getUserName());
+        User someUser = users.get(dp.getUserName());
         if (someUser == null) {
-            //ERROR(THIS IS IMPOSSIBLE)//Users Should be created when register(not sending dataPack)
-            // ↓this is example to debug
-            users.add(new User(dp.getUserName(), "somePas", new ArrayList<ProgramTracker>()));
-            someUser = users.get(users.size() - 1);
+            someUser = new User(dp.getUserName(), dp.getPassword(), new ArrayList<ProgramTracker>());
+            users.putIfAbsent(dp.getUserName(), someUser);
         }
-
-        System.out.println("Collect interval: " + dp.getCollectInterval());
 
         for (ProgramClass programClass : dp.getPrograms()) {
             someUser.addInfoAboutPrograms(dp.getDate(), dp.getActiveWindowProcessName(), dp.getCollectInterval(), programClass);
         }
         someUser.setID(10);
     }
-
-    private User isUserInArray(String userName) {
-        for (User user : users) {
-            if (user.getName().equals(userName)) {
-                return user;
-            }
-        }
-        return null;
-    }
-
 }
