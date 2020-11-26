@@ -20,7 +20,7 @@
    <children>
       <VBox prefHeight="230.0" prefWidth="400.0">
          <children>
-            <HBox fx:id="titleBar" alignment="CENTER_RIGHT" prefHeight="30.0" prefWidth="400.0" style="-fx-background-color: #585858;">
+            <HBox fx:id="titleBar" alignment="CENTER_RIGHT" prefHeight="30.0" prefWidth="400.0" style="-fx-background-color: #585858; -fx-border-color: #696969;">
                <cursor>
                   <Cursor fx:constant="MOVE" />
                </cursor>
@@ -73,6 +73,9 @@
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="20.0" right="10.0" />
                                  </VBox.margin>
+                                 <effect>
+                                    <DropShadow />
+                                 </effect>
                               </TextField>
                            </children>
                         </VBox>
@@ -90,6 +93,9 @@
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="20.0" right="10.0" />
                                  </VBox.margin>
+                                 <effect>
+                                    <DropShadow />
+                                 </effect>
                               </TextField>
                            </children>
                         </VBox>
@@ -121,6 +127,9 @@
                            <image>
                               <Image url="@style/turnOffButtonSmall.png" />
                            </image>
+                           <effect>
+                              <DropShadow color="#de9e667f" />
+                           </effect>
                         </ImageView>
                         <Text fx:id="errorMessage" fill="#ff902f" strokeType="OUTSIDE" strokeWidth="0.0" text="No internet connection" visible="false">
                            <font>

@@ -14,7 +14,7 @@ import javafx.stage.WindowEvent;
 public class Main extends Application {
 
     public static Stage window;
-    private static Controller controller;
+    private static Controller controller = null;
     private static final String stylePath = "GUI/style/";
 
     @Override public void start(Stage window) throws Exception {
@@ -30,7 +30,12 @@ public class Main extends Application {
         window.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent t) {
-                controller.closeApp();
+                if (controller != null) {
+                    controller.closeApp();
+                } else {
+                    Platform.exit();
+                    System.exit(0);
+                }
             }
         });
 
