@@ -5,11 +5,14 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -223,6 +226,8 @@ public class Controller {
         statusText.setFill(Paint.valueOf("#9de05c"));
         statusText.setText("Turn off");
         toggleButton.setImage(new Image(stylePath + "turnOnButtonSmall.png"));
+        DropShadow greenShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(157, 224, 92, 0.5), 10, 0, 0, 0);
+        toggleButton.setEffect(greenShadow);
         nameField.setDisable(true);
         if (!portField.getText().equals("")) {
             try {
@@ -247,6 +252,8 @@ public class Controller {
         statusText.setFill(Paint.valueOf("#f8902f"));
         statusText.setText("Turn on");
         toggleButton.setImage(new Image(stylePath + "turnOffButtonSmall.png"));
+        DropShadow orangeShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(221, 157, 102, 0.5), 10, 0, 0, 0);
+        toggleButton.setEffect(orangeShadow);
         nameField.setDisable(false);
         portField.setDisable(false);
     }
