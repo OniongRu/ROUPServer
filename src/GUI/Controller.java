@@ -1,14 +1,18 @@
 package GUI;
 
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -46,7 +50,7 @@ public class Controller {
     private ImageView toggleButton;
 
     @FXML
-    private Text errorMessage;
+    private Text errorMessage = new Text();
 
     private Stage window;
 
@@ -74,7 +78,7 @@ public class Controller {
     }
 
     @FXML
-    private void onCloseReleased(MouseEvent event) {
+    private void onCloseClicked(MouseEvent event) {
         window = (Stage) (closeButton).getScene().getWindow();
         if (thController.getIsServerToggledOff())
         {
@@ -91,7 +95,7 @@ public class Controller {
     }
 
     @FXML
-    private void onMinimizeReleased(MouseEvent event) {
+    private void onMinimizeClicked(MouseEvent event) {
         ((Stage) (minimizeButton).getScene().getWindow()).setIconified(true);
     }
 
@@ -108,21 +112,19 @@ public class Controller {
         return bufErrorMessage;
     }
 
-    public void setBufErrorMessage(String buff) {
-        bufErrorMessage = buff;
-    }
+    public void setBufErrorMessage(String buff) { bufErrorMessage = buff; }
 
     public void showErrorMessage(String error) {
-        if (errorMessage == null) {
-            bufErrorMessage = error;
-            return;
+        if (errorMessage != null) {
+            errorMessage.setText(error);
+            errorMessage.setVisible(true);
         }
-        errorMessage.setText(error);
-        errorMessage.setVisible(true);
     }
 
     public void showErrorMessage(String error, Paint paint) {
-        errorMessage.setFill(paint);
+        if (errorMessage != null) {
+            errorMessage.setFill(paint);
+        }
         showErrorMessage(error);
     }
 
@@ -219,68 +221,74 @@ public class Controller {
         System.exit(0);
     }
 
+    //GUI changes when big orange button is pressed
     public void onTurnedOn(){
         statusText.setFill(Paint.valueOf("#9de05c"));
         statusText.setText("Turn off");
         toggleButton.setImage(new Image(stylePath + "turnOnButtonSmall.png"));
+        DropShadow greenShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(157, 224, 92, 0.5), 10, 0, 0, 0);
+        toggleButton.setEffect(greenShadow);
         nameField.setDisable(true);
-        if (!portField.getText().equals(""))
-            port = Integer.parseInt(portField.getText());
+        if (!portField.getText().equals("")) {
+            try {
+                port = Integer.parseInt(portField.getText());
+            } catch (NumberFormatException e) {
+                port = DEFAULTPORT;
+                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
+            }
+            if (port > 65535 || port <= 1024) {
+                port = DEFAULTPORT;
+                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
+            }
+        }
         else{
             port = DEFAULTPORT;
         }
         portField.setDisable(true);
     }
 
+    //GUI changes when big green button is pressed
     public void onTurnedOff(){
         statusText.setFill(Paint.valueOf("#f8902f"));
         statusText.setText("Turn on");
         toggleButton.setImage(new Image(stylePath + "turnOffButtonSmall.png"));
+        DropShadow orangeShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(221, 157, 102, 0.5), 10, 0, 0, 0);
+        toggleButton.setEffect(orangeShadow);
         nameField.setDisable(false);
         portField.setDisable(false);
     }
 
-    private void toggleSwitch()
-    {
+    private void toggleSwitch() {
         if (thController.getIsServerToggledOff()) {
             onTurnedOn();
             Thread.UncaughtExceptionHandler h = (th, ex) -> {
-                //try {
                 try {
                     thController.sendClose();
+                    showErrorMessage("Uncaught error");
                 }catch (IOException e){
-                    showErrorMessage("Selector is invalid. And closing connection failed");
+                    showErrorMessage("Uncaught error\nClosing connection failed");
                 }
-                showErrorMessage("Can't launch server: no internet connection");
                 onTurnedOff();
             };
             connectionAcceptTh = new Thread() {
                 @Override
                 public void run() {
                     try{
-                    thController.launchService(port);
+                        thController.launchService(port);
                     } catch (PrettyException e) {
                         showErrorMessage(e.getPrettyMessage());
                         try {
-                            thController.closeService();
-                        } catch (IOException ioException) {
+                            thController.sendClose();
+                            onTurnedOff();
+                        } catch (IOException exception) {
                             showErrorMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
+                        } catch (Exception unusualException) {
+                            throw new RuntimeException();
                         }
                         //System.out.println(e.toString());
                         //I hate this thing =(
                         //Was stuck here for hours
-                        throw new RuntimeException();
-                    }catch (RuntimeException e) {
-                        showErrorMessage(e.getMessage());
-                        try {
-                            thController.closeService();
-                        } catch (IOException ioException) {
-                            showErrorMessage(e.getMessage() + "\n" + "Also closing connection failed");
-                        }
-                        //System.out.println(e.toString());
-                        //I hate this thing =(
-                        //Was stuck here for hours
-                        throw new RuntimeException();
+                        //throw new RuntimeException();
                     }
                 }
             };
@@ -291,10 +299,17 @@ public class Controller {
             onTurnedOff();
             try {
                 thController.sendClose();
-            }catch (IOException e){
+            }catch (IOException e) {
                 showErrorMessage("Selector is invalid. And closing connection failed");
             }
         }
+    }
+
+    public boolean isContain (MouseEvent mouseEvent, ImageView image) {
+        if (mouseEvent.getX() >= image.getBoundsInParent().getCenterX() - (image.getFitWidth() / 2) && mouseEvent.getX() <= image.getBoundsInParent().getCenterX() + (image.getFitWidth() / 2) && mouseEvent.getY() >= image.getBoundsInParent().getCenterY() - (image.getFitHeight() / 2) && mouseEvent.getY() <= image.getBoundsInParent().getCenterY() + (image.getFitHeight() / 2)) {
+            return true;
+        }
+        return false;
     }
 
     public void initialize()
@@ -302,15 +317,24 @@ public class Controller {
         titleBar.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent t) {
-                mouse.setX(t.getX());
-                mouse.setY(t.getY());
+                if (isContain(t, minimizeButton) || isContain(t, closeButton)) {
+                    mouse.setX(-1);
+                    mouse.setY(-1);
+                }
+                else {
+                    mouse.setX(t.getX());
+                    mouse.setY(t.getY());
+                }
             }
         });
+
         titleBar.setOnMouseDragged(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent t) {
-                titleBar.getScene().getWindow().setX(t.getScreenX() - mouse.getX());
-                titleBar.getScene().getWindow().setY(t.getScreenY() - mouse.getY());
+                if (mouse.getX() != -1) {
+                    titleBar.getScene().getWindow().setX(t.getScreenX() - mouse.getX());
+                    titleBar.getScene().getWindow().setY(t.getScreenY() - mouse.getY());
+                }
             }
         });
 

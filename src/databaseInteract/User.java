@@ -10,14 +10,15 @@ public class User {
     //TODO - get ID from DB using login and password
     private int ID;
     private String name;
-    private String password;
+    private byte[] password;
     private ArrayList<ProgramTracker> Programs;
 
     public String getName() {
         return name;
     }
 
-    public String getPassword() {
+    public byte[] getPassword() {
+        assert (password.length > 128);
         return password;
     }
 
@@ -40,14 +41,14 @@ public class User {
         System.out.println("***********");
     }
 
-    public User(int id, String name, String password, ArrayList<ProgramTracker> Programs) {
+    public User(int id, String name, byte[] password, ArrayList<ProgramTracker> Programs) {
         this.ID = id;
         this.name = name;
         this.password = password;
         this.Programs = Programs;
     }
 
-    public User(String name, String password, ArrayList<ProgramTracker> Programs) {
+    public User(String name, byte[] password, ArrayList<ProgramTracker> Programs) {
         this.name = name;
         this.password = password;
         this.Programs = Programs;

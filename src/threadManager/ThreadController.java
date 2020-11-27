@@ -3,14 +3,17 @@ package threadManager;
 import DBManager.DBManager;
 import GUI.Controller;
 import GUI.PrettyException;
+import com.google.gson.*;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
 import databaseInteract.DataPackToUser;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
 import databaseInteract.User;
+import javafx.scene.paint.Paint;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
@@ -19,6 +22,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,6 +50,7 @@ public class ThreadController {
         this.isServerToggledOff = isServerToggledOff;
     }
 
+    //Picks best thread to attach connection to
     private int getNumFreeServer(){
         int minServerIndex = 0;
         int curServerIndex = 0;
@@ -59,6 +66,7 @@ public class ThreadController {
         return minServerIndex;
     }
 
+    //Accepts connection from clients
     public void accept(SelectionKey key, final int PORT) throws PrettyException, IOException {
         int coresNum = Runtime.getRuntime().availableProcessors();
         SocketChannel clientChannel = null;
@@ -73,14 +81,33 @@ public class ThreadController {
         }
     }
 
+    //Method schedules periodic converting and writing to database received DataPacks
     public void writeUsersToDB() {
         final Runnable databaseWriter = new Runnable() {
             public void run() {
-                DataPackToUser converter = new DataPackToUser(dataPackQueue, new ArrayList<>());
+                DataPackToUser converter = new DataPackToUser(dataPackQueue, new HashMap<String, User>());
                 converter.TransformPacks();
-                ArrayList<User> users = converter.getUsers();
+
+                Map<String, User> users = converter.getUsers();
                 DBManager manager = new DBManager();
-                for (User user : users) {
+
+                /*
+                //That's for yuriy - creates Json file from users
+                Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                    @Override
+                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+                        return new JsonPrimitive(formatter.format(src));
+                    }
+                }).create();
+
+                dataSend.DataPack dp = new dataSend.DataPack(users.values());
+                String gooseJson = gson.toJson(dp);
+                */
+
+
+                //That's how we write to DB
+                for (User user : users.values()) {
                     user.finalizeObservations();
                     user.print();
                     try {
@@ -88,7 +115,7 @@ public class ThreadController {
                         for (ProgramTracker program : user.getPrograms()) {
                             manager.addProgram(program, user.getName());
                             for (HourInf programHourWork : program.getHourWork()){
-                                manager.addHourInf(programHourWork, program.getName());
+                                manager.addHourInf(programHourWork, program.getName(), user.getName());
                             }
                         }
 
@@ -96,22 +123,25 @@ public class ThreadController {
                         Controller.getInstance().showErrorMessage("Writing to DB failed");
                     }
                 }
-                /*User user = null;
-                try{
-                    user = manager.getUser(76);
-                } catch (SQLException e) {
-                    Controller.getInstance().showErrorMessage("Reading from DB failed");
-                }
-                System.out.println();
-                System.out.println();
-                System.out.println();
-                System.out.println();
-                System.out.println("''''''''''Read user 76 from database''''''''''''");
-                user.print();*/
+
+                //Now try reading from DB
+                /*
+                //List<String> users = Arrays.asList("gooseTheFirst", "gooseTheSecond", "gooseTheThird");
+                Set<User> userSetFromDB = new HashSet<User>();
+                for (var user : users) {
+                    try {
+                        userSetFromDB.add(manager.getUser(user));
+                    } catch (SQLException e) {
+                        Controller.getInstance().showErrorMessage("Could not read user " + user + "\nfrom DB", Paint.valueOf("#9de05c"));
+                    }
+                }*/
+                /*for (User user : userSetFromDB) {
+                    user.print();
+                }*/
             }
         };
 
-        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 10, 10, SECONDS);
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 3, 60, SECONDS);
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
@@ -170,7 +200,7 @@ public class ThreadController {
     public void closeService() throws IOException {
         isServerToggledOff = true;
         //For some reason i can't close connection from other thread. They say it's an OS-dependant thing
-        //That's why i haven't placed this in closeService() as meant to be called from main thread
+        //That's why i haven't placed this in sendClose() as it is meant to be called from other thread
         if (serverList != null) {
             for (ClientGroup server : serverList) {
                 server.sendClose();
@@ -190,8 +220,9 @@ public class ThreadController {
         sSelector = null;
     }
 
+    //Method that is to be called to stop service
     public void sendClose() throws IOException {
-        isServerToggledOff = true;
+        setIsServerToggledOff(true);
         if (sSelector != null)
             sSelector.wakeup();
         else {

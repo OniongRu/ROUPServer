@@ -31,10 +31,7 @@ public class ResourceUsage {
         this.ramUsage += ramUsage;
     }
 
-    public int getThreadAmount()
-    {
-        return threadAmount;
-    }
+    public int getThreadAmount() { return threadAmount; }
     public double getCpuUsage() { return cpuUsage; }
     public long getRamUsage()
     {
