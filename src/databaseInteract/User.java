@@ -11,6 +11,8 @@ public class User {
     private int ID;
     private String name;
     private byte[] password;
+
+    //TODO - change arraylist to map
     private ArrayList<ProgramTracker> Programs;
 
     public String getName() {

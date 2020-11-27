@@ -128,7 +128,7 @@
                               <Image url="@style/turnOffButtonSmall.png" />
                            </image>
                            <effect>
-                              <DropShadow color="#de9e667f" />
+                              <DropShadow color="#dd9d6680" />
                            </effect>
                         </ImageView>
                         <Text fx:id="errorMessage" fill="#ff902f" strokeType="OUTSIDE" strokeWidth="0.0" text="No internet connection" visible="false">
