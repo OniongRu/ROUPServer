@@ -32,8 +32,6 @@ public class DBManager {
     }
 
     public void addUser(User user) throws SQLException {
-
-        //byte[] password = {-8,-128,98,-19,95,92,14,-114,-36,31,51,126,109,-2,67,98};
         String query = "INSERT INTO users(user_name, password) VALUES (?, ?)";
         PreparedStatement statement = conn.prepareStatement(query);
         statement.setString(1, user.getName());
@@ -111,6 +109,31 @@ public class DBManager {
         byte[] password = resultSet.getBytes(3);
 
         return new User(id, user_name, password, getProgramsByUserId(id));
+    }
+
+    public boolean isUserExists(String userName) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT password FROM users WHERE user_name=\"" + userName + "\"");
+        if (!resultSet.next()) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isUserValid(String userName, byte[] password) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT password FROM users WHERE user_name=\"" + userName + "\"");
+        if (!resultSet.next() || !Arrays.equals(resultSet.getBytes(1), password)) {
+            return false;
+        }
+        if (resultSet.next()) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean isUserValid(User user) throws SQLException {
+        return isUserValid(user.getName(), user.getPassword());
     }
 
     public User getUser(int id) throws SQLException {

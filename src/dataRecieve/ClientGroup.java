@@ -1,14 +1,23 @@
 package dataRecieve;
 
+import DBManager.DBManager;
+import GUI.Controller;
 import GUI.PrettyException;
-import com.google.gson.Gson;
+import com.google.gson.JsonPrimitive;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.nio.*;
 import java.lang.*;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.sql.SQLException;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -114,35 +123,98 @@ public class ClientGroup extends Thread{
         SelectorS.wakeup();
     }
 
+    //TODO - delete this when debug not needed
+    public byte[] getPBKDF2SecurePassword(String userName, String password) {
+        try {
+            byte[] salt;
+            salt = "defaultPassword".getBytes();
+            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            return factory.generateSecret(spec).getEncoded();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            Controller.getInstance().showErrorMessage("Can't encrypt password:\nAlgorithm or KeySpec exception");
+            Controller.getInstance().onTurnedOff();
+            return null;
+        } catch (Exception e) {
+            Controller.getInstance().showErrorMessage("Can't encrypt password\nUnknown reason");
+            Controller.getInstance().onTurnedOff();
+            return null;
+        }
+    }
+
     //приём json-а от клиента и преобразование в объекта dataReceive.DataPack
     //In this application there is an agreement "EndThisConnection" in a beginning means stop signal
     //Beginning "Client data\n" means that server is about to receive DataPack
     //Beginning "Request\n" means that server is about to receive a query for an administrator's client
     private void takeGson(SelectionKey key) {
-        try {
             SocketChannel client = (SocketChannel) key.channel();
             ByteBuffer buffer = ByteBuffer.allocate(1024*10);
-            client.read(buffer);
-            String gsonClient = new String(buffer.array()).trim();
-            if(gsonClient.equals("EndThisConnection")) {//TODO Add types of getting data
+            try {
+                client.read(buffer);
+            }
+            catch (IOException e) {
                 decrementCnt();
-                ParseJSON.parseEndConnection(key);
+                try {
+                    System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
+                    key.channel().close();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
-            else if (gsonClient.startsWith("Client data\n")) {
-                dataPackQueue.add(ParseJSON.parseClSender(key, gsonClient));
-                System.out.println(gsonClient);
+
+            String clientData = new String(buffer.array()).trim();
+            buffer.clear();
+
+            /*//TODO - delete when debug finishes
+            byte[] passwordBytes = getPBKDF2SecurePassword("", "");
+            clientData = "Register client sender\nlogin\n";
+            clientData += Base64.getEncoder().encodeToString(passwordBytes);*/
+
+
+            if(clientData.equals("EndThisConnection")) {//TODO Add types of getting data
+                decrementCnt();
+                ParseJSON.EndConnection(key);
             }
-            else if (gsonClient.startsWith("Request\n")) {
+            else if (clientData.startsWith("Client data\n")) {
+                System.out.println(clientData);
+                DataPack dataPackFromUser = ParseJSON.ClSenderData(clientData);
+                DBManager manager = new DBManager();
+                try {
+                    if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword())) {
+                        dataPackQueue.add(dataPackFromUser);
+                        buffer.put("Data is being processed".getBytes());
+                    } else {
+                        buffer.put("Data is ignored".getBytes());
+                    }
+                } catch (SQLException e) {
+                    buffer.clear();
+                    buffer.put("Data is ignored".getBytes());
+                    Controller.getInstance().showErrorMessage("Could not check if user exists in database");
+                } finally {
+                    buffer.flip();
+                    try {
+                        client.write(buffer);
+                    } catch (IOException e) {
+                        Controller.getInstance().showErrorMessage("Could not send respond client\ndata status");
+                    }
+                }
+            }
+            else if (clientData.startsWith("Request\n")) {
                 //TODO handle requests
             }
-        }catch (IOException e) {
-            decrementCnt();
-            try {
-                System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
-                key.channel().close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
+            else if (clientData.startsWith("Register client sender\n")) {
+                //Respond register status
+                if (ParseJSON.RegisterClSender(clientData)) {
+                    buffer.put("Register successful".getBytes());
+                } else {
+                    buffer.put("Register failed".getBytes());
+                }
+                buffer.flip();
+                try {
+                    client.write(buffer);
+                } catch (IOException e) {
+                    Controller.getInstance().showErrorMessage("Could not send respond client\nregister status");
+                }
             }
-        }
     }
 }

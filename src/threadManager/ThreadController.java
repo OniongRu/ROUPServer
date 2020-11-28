@@ -6,12 +6,14 @@ import GUI.PrettyException;
 import com.google.gson.*;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
+import dataRecieve.ParseJSON;
 import databaseInteract.DataPackToUser;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
 import databaseInteract.User;
 import javafx.scene.paint.Paint;
 
+import javax.naming.ldap.Control;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
@@ -111,11 +113,14 @@ public class ThreadController {
                     user.finalizeObservations();
                     user.print();
                     try {
-                        manager.addUser(user);
-                        for (ProgramTracker program : user.getPrograms()) {
-                            manager.addProgram(program, user.getName());
-                            for (HourInf programHourWork : program.getHourWork()){
-                                manager.addHourInf(programHourWork, program.getName(), user.getName());
+                        if (!manager.isUserValid(user)) {
+                            Controller.getInstance().showErrorMessage("User " + user.getName() + "is not stored in DB\nRelevant info ignored");
+                        } else {
+                            for (ProgramTracker program : user.getPrograms()) {
+                                manager.addProgram(program, user.getName());
+                                for (HourInf programHourWork : program.getHourWork()) {
+                                    manager.addHourInf(programHourWork, program.getName(), user.getName());
+                                }
                             }
                         }
 
@@ -145,6 +150,12 @@ public class ThreadController {
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
+        //TODO - delete on release
+        DBManager manager = new DBManager();
+        String clientData = "Register client sender\n\nnYTQ4q/9v8UcKK64U2cz9g==";
+        ParseJSON.RegisterClSender(clientData);
+        //TODO - delete on release
+
         isServerToggledOff = false;
         serverList = new ArrayList<>();
         try {
