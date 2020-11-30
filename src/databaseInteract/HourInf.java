@@ -72,6 +72,7 @@ public class HourInf {
         this.timeActSum = 0;
         this.dataPackCount = 0;
         this.resource = new ResourceUsage();
+
     }
     
     public HourInf(LocalDateTime date)
@@ -83,10 +84,24 @@ public class HourInf {
         this.resource = new ResourceUsage();
     }
 
-    public void AddNewProgram(int collectInterval, ProgramClass programClass){
+    public void AddNewProgram(int collectInterval, ProgramClass programClass) {
         dataPackCount++;
         timeSum += collectInterval;
         resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
+    }
+
+    public void mergeInfo4DB(HourInf hourInf) {
+        int dataPackCountFromDB = hourInf.dataPackCount;
+        this.timeSum += hourInf.timeSum;
+        this.timeActSum += hourInf.timeActSum;
+        ResourceUsage someResource = hourInf.resource;
+        this.resource.merge4UpdateDB(someResource.getThreadAmount() * dataPackCountFromDB,
+                someResource.getCpuUsage() * dataPackCountFromDB,
+                someResource.getRamUsage() * dataPackCountFromDB,
+                dataPackCount);
+        this.dataPackCount = dataPackCount + dataPackCountFromDB;
+        finalizeObservations();
+
     }
 
     public void finalizeObservations() {

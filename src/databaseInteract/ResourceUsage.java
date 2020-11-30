@@ -5,6 +5,7 @@ public class ResourceUsage {
     private double cpuUsage;
     private long ramUsage;
 
+
     public void print(){
         System.out.println("Thread amount: " + threadAmount);
         System.out.println("CPU usage: " + cpuUsage);
@@ -24,17 +25,27 @@ public class ResourceUsage {
         this.ramUsage = 0;
     }
 
-    public void AddMoreInfoAbout(int threadAmount, double cpuUsage, long ramUsage)
-    {
+    public void AddMoreInfoAbout(int threadAmount, double cpuUsage, long ramUsage) {
         this.threadAmount += threadAmount;
         this.cpuUsage += cpuUsage;
         this.ramUsage += ramUsage;
     }
 
-    public int getThreadAmount() { return threadAmount; }
-    public double getCpuUsage() { return cpuUsage; }
-    public long getRamUsage()
-    {
+    public void merge4UpdateDB(int threadAmount, double cpuUsage, long ramUsage, int dbCount) {
+        this.threadAmount = this.threadAmount * dbCount + threadAmount;
+        this.cpuUsage = this.cpuUsage * dbCount + cpuUsage;
+        this.ramUsage = this.ramUsage * dbCount + ramUsage;
+    }
+
+    public int getThreadAmount() {
+        return threadAmount;
+    }
+
+    public double getCpuUsage() {
+        return cpuUsage;
+    }
+
+    public long getRamUsage() {
         return ramUsage;
     }
 

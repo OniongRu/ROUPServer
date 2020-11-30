@@ -3,13 +3,11 @@ package dataRecieve;
 import DBManager.DBManager;
 import GUI.Controller;
 import GUI.PrettyException;
-import com.google.gson.JsonPrimitive;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.io.*;
-import java.nio.*;
-import java.lang.*;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -17,7 +15,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.sql.SQLException;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
@@ -147,53 +144,50 @@ public class ClientGroup extends Thread{
     //Beginning "Client data\n" means that server is about to receive DataPack
     //Beginning "Request\n" means that server is about to receive a query for an administrator's client
     private void takeGson(SelectionKey key) {
-            SocketChannel client = (SocketChannel) key.channel();
-            ByteBuffer buffer = ByteBuffer.allocate(1024*10);
+        SocketChannel client = (SocketChannel) key.channel();
+        ByteBuffer requestBuffer = ByteBuffer.allocate(1024 * 10);
+        try {
+            client.read(requestBuffer);
+        } catch (IOException e) {
+            decrementCnt();
             try {
-                client.read(buffer);
+                System.out.println(((SocketChannel) key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
+                key.channel().close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
-            catch (IOException e) {
-                decrementCnt();
-                try {
-                    System.out.println(((SocketChannel)key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
-                    key.channel().close();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
+        }
 
-            String clientData = new String(buffer.array()).trim();
-            buffer.clear();
+        String clientData = new String(requestBuffer.array()).trim();
+        requestBuffer.clear();
 
             /*//TODO - delete when debug finishes
             byte[] passwordBytes = getPBKDF2SecurePassword("", "");
             clientData = "Register client sender\nlogin\n";
             clientData += Base64.getEncoder().encodeToString(passwordBytes);*/
+        ByteBuffer respondBuffer = ByteBuffer.allocate(1024 * 10);
 
-
-            if(clientData.equals("EndThisConnection")) {//TODO Add types of getting data
-                decrementCnt();
-                ParseJSON.EndConnection(key);
-            }
-            else if (clientData.startsWith("Client data\n")) {
-                System.out.println(clientData);
-                DataPack dataPackFromUser = ParseJSON.ClSenderData(clientData);
-                DBManager manager = new DBManager();
-                try {
-                    if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword())) {
-                        dataPackQueue.add(dataPackFromUser);
-                        buffer.put("Data is being processed".getBytes());
-                    } else {
-                        buffer.put("Data is ignored".getBytes());
+        if (clientData.equals("EndThisConnection")) {//TODO Add types of getting data
+            decrementCnt();
+            ParseJSON.EndConnection(key);
+        } else if (clientData.startsWith("Client data\n")) {
+            System.out.println(clientData);
+            DataPack dataPackFromUser = ParseJSON.ClSenderData(clientData);
+            DBManager manager = new DBManager();
+            try {
+                if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword())) {
+                    dataPackQueue.add(dataPackFromUser);
+                    respondBuffer.put("Data is being processed".getBytes());
+                } else {
+                    respondBuffer.put("Data is ignored".getBytes());
                     }
                 } catch (SQLException e) {
-                    buffer.clear();
-                    buffer.put("Data is ignored".getBytes());
-                    Controller.getInstance().showErrorMessage("Could not check if user exists in database");
+                respondBuffer.put("Data is ignored".getBytes());
+                Controller.getInstance().showErrorMessage("Could not check if user exists in database");
                 } finally {
-                    buffer.flip();
+                respondBuffer.flip();
                     try {
-                        client.write(buffer);
+                        client.write(respondBuffer);
                     } catch (IOException e) {
                         Controller.getInstance().showErrorMessage("Could not send respond client\ndata status");
                     }
@@ -205,13 +199,13 @@ public class ClientGroup extends Thread{
             else if (clientData.startsWith("Register client sender\n")) {
                 //Respond register status
                 if (ParseJSON.RegisterClSender(clientData)) {
-                    buffer.put("Register successful".getBytes());
+                    respondBuffer.put("Register successful".getBytes());
                 } else {
-                    buffer.put("Register failed".getBytes());
+                    respondBuffer.put("Register failed".getBytes());
                 }
-                buffer.flip();
+            respondBuffer.flip();
                 try {
-                    client.write(buffer);
+                    client.write(respondBuffer);
                 } catch (IOException e) {
                     Controller.getInstance().showErrorMessage("Could not send respond client\nregister status");
                 }

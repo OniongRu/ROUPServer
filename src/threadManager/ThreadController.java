@@ -3,7 +3,6 @@ package threadManager;
 import DBManager.DBManager;
 import GUI.Controller;
 import GUI.PrettyException;
-import com.google.gson.*;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
 import dataRecieve.ParseJSON;
@@ -11,11 +10,8 @@ import databaseInteract.DataPackToUser;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
 import databaseInteract.User;
-import javafx.scene.paint.Paint;
 
-import javax.naming.ldap.Control;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
@@ -24,15 +20,11 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
-import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class ThreadController {
@@ -146,7 +138,7 @@ public class ThreadController {
             }
         };
 
-        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 3, 60, SECONDS);
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 30, 30, SECONDS);
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
