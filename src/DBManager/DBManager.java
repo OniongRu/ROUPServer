@@ -1,14 +1,15 @@
 package DBManager;
 
-import databaseInteract.*;
-
+import databaseInteract.HourInf;
+import databaseInteract.ProgramTracker;
+import databaseInteract.ResourceUsage;
+import databaseInteract.User;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class DBManager {
     public void addProgram(ProgramTracker program, String user_name) throws SQLException {
         Statement statement = conn.createStatement();
         String query = String.format(
+                //TODO Correct multiple programs for one user
                 "INSERT INTO program (program_name, user_id) " +
                         "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
                 program.getName(), user_name);
@@ -52,7 +54,12 @@ public class DBManager {
     }
 
     public void addHourInf(HourInf hourInf, String program_name, String userName) throws SQLException {
+        // HourInf hourInfFromDB= getHourInf(program_name,userName, hourInf.getCreationDate());
+        // hourInf.mergeInfo4DB(hourInfFromDB);
+        //TODO check update houur info after all shit mistake
         ResourceUsage resource = hourInf.getResource();
+
+        //TODO fails when different users have same program names
         String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate) " +
                 "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=? AND user_id=(SELECT user_id FROM users WHERE user_name=?)), ?, ?, ?, ?, ?)";
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
@@ -68,6 +75,26 @@ public class DBManager {
             int rows = preparedStatement.executeUpdate();
             System.out.printf("Added %d rows at table resourceUsage\n", rows);
         }
+    }
+
+    public HourInf getHourInf(String programName, String userName, LocalDateTime Date) throws SQLException {
+        HourInf hourInfo;
+        Statement statement = conn.createStatement();
+        String sql = "SELECT * FROM hourinfo WHERE creationDate=" + Timestamp.valueOf(Date) + "AND program_id = (SELECT program_id FROM program WHERE program_name=" + programName + "AND user_id=(SELECT user_id FROM users WHERE user_name=" + userName + "))";
+        ResultSet resultSet = statement.executeQuery(sql);
+        if (resultSet.next()) {
+            double cpu = resultSet.getDouble(2);
+            long ram = resultSet.getInt(3);
+            int thread = resultSet.getInt(5);
+            int timeActSum = resultSet.getInt(6);
+            int timeSum = resultSet.getInt(7);
+            Timestamp creationDate = resultSet.getTimestamp(9);
+            hourInfo = new HourInf(timeSum, timeActSum, thread, cpu, ram, LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId()));
+        } else {
+            hourInfo = new HourInf();
+        }
+
+        return hourInfo;
     }
 
     public ArrayList<HourInf> getHourInfByProgramId(int id_p) throws SQLException {
