@@ -46,9 +46,17 @@ public class HourInf {
         System.out.println();
     }
 
+    public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, LocalDateTime creationDate, int dataPackCount)
+    {
+        this.timeSum = timeSum;
+        this.creationDate = creationDate;
+        this.timeActSum = timeActSum;
+        this.resource = new ResourceUsage(threadAmount, cpuUsage, ramUsage);
+        this.dataPackCount = dataPackCount;
+    }
+
     public HourInf(int timeSum, int timeActSum, int threadAmount, double cpuUsage, long ramUsage, LocalDateTime creationDate)
     {
-
         this.timeSum = timeSum;
         this.creationDate = creationDate;
         this.timeActSum = timeActSum;
@@ -90,18 +98,17 @@ public class HourInf {
         resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
     }
 
-    public void mergeInfo4DB(HourInf hourInf) {
+    public void mergeFinalizedHourInfo(HourInf hourInf) {
         int dataPackCountFromDB = hourInf.dataPackCount;
         this.timeSum += hourInf.timeSum;
         this.timeActSum += hourInf.timeActSum;
         ResourceUsage someResource = hourInf.resource;
-        this.resource.merge4UpdateDB(someResource.getThreadAmount() * dataPackCountFromDB,
-                someResource.getCpuUsage() * dataPackCountFromDB,
-                someResource.getRamUsage() * dataPackCountFromDB,
-                dataPackCount);
+        this.resource.mergeFinalizedResourceUsage(someResource.getThreadAmount(),
+                someResource.getCpuUsage(),
+                someResource.getRamUsage(),
+                dataPackCount, dataPackCountFromDB);
         this.dataPackCount = dataPackCount + dataPackCountFromDB;
         finalizeObservations();
-
     }
 
     public void finalizeObservations() {

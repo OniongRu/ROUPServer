@@ -31,10 +31,10 @@ public class ResourceUsage {
         this.ramUsage += ramUsage;
     }
 
-    public void merge4UpdateDB(int threadAmount, double cpuUsage, long ramUsage, int dbCount) {
-        this.threadAmount = this.threadAmount * dbCount + threadAmount;
-        this.cpuUsage = this.cpuUsage * dbCount + cpuUsage;
-        this.ramUsage = this.ramUsage * dbCount + ramUsage;
+    public void mergeFinalizedResourceUsage(int threadAmount, double cpuUsage, long ramUsage, int dpCount, int dpCountFromDB) {
+        this.threadAmount = this.threadAmount * dpCount + threadAmount * dpCountFromDB;
+        this.cpuUsage = this.cpuUsage * dpCount + cpuUsage * dpCountFromDB;
+        this.ramUsage = this.ramUsage * dpCount + ramUsage * dpCountFromDB;
     }
 
     public int getThreadAmount() {

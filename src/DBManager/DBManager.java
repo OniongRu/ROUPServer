@@ -1,9 +1,14 @@
 package DBManager;
 
+import GUI.Controller;
+import com.mysql.cj.xdevapi.SqlMultiResult;
+import com.mysql.cj.xdevapi.SqlResult;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
 import databaseInteract.ResourceUsage;
 import databaseInteract.User;
+import javafx.scene.control.Control;
+import javafx.scene.paint.Paint;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.function.Supplier;
 
 public class DBManager {
 
@@ -25,7 +31,6 @@ public class DBManager {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             conn = getConnection();
-            System.out.println("Connection to Store DB successful!");
         } catch (Exception ex) {
             System.out.println("Connection failed...");
             System.out.println(ex);
@@ -33,39 +38,77 @@ public class DBManager {
     }
 
     public void addUser(User user) throws SQLException {
-        String query = "INSERT INTO users(user_name, password) VALUES (?, ?)";
+        String query = "INSERT INTO users(user_name, password, privilege) VALUES (?, ?, ?)";
         PreparedStatement statement = conn.prepareStatement(query);
         statement.setString(1, user.getName());
         statement.setBytes(2, user.getPassword());
+        statement.setInt(3, 0);
 
         int rows = statement.executeUpdate();
         System.out.printf("Added %d rows at table users\n", rows);
     }
 
-    public void addProgram(ProgramTracker program, String user_name) throws SQLException {
-        Statement statement = conn.createStatement();
-        String query = String.format(
-                //TODO Correct multiple programs for one user
-                "INSERT INTO program (program_name, user_id) " +
-                        "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
-                program.getName(), user_name);
-        int rows = statement.executeUpdate(query);
-        System.out.printf("Added %d rows at table program\n", rows);
+    public boolean isProgramExists(String userName, String programName) throws SQLException {
+        String sqlSmoll = "SELECT program_id FROM program WHERE program_name=\"" + programName +
+                "\" AND user_id=(SELECT user_id FROM users WHERE user_name=\"" + userName + "\")";
+        try (PreparedStatement preparedStatement = conn.prepareStatement(sqlSmoll)) {
+            ResultSet resultSet = preparedStatement.executeQuery(sqlSmoll);
+            if (!resultSet.next()) {
+                return false;
+            }
+            if (resultSet.next()) {
+                throw new SQLException();
+            }
+            return true;
+        }
     }
 
-    public void addHourInf(HourInf hourInf, String program_name, String userName) throws SQLException {
-        // HourInf hourInfFromDB= getHourInf(program_name,userName, hourInf.getCreationDate());
-        // hourInf.mergeInfo4DB(hourInfFromDB);
-        //TODO check update houur info after all shit mistake
-        ResourceUsage resource = hourInf.getResource();
+    public void addProgram(ProgramTracker program, String user_name) throws SQLException {
+        boolean isProgramInDB = true;
+        try {
+            isProgramInDB = isProgramExists(user_name, program.getName());
+        } catch (SQLException e) {
+            Controller.getInstance().showErrorMessage("Fatal: malformed database\nor unqualified developer", Paint.valueOf("#910415"));
+            return;
+        }
+        if (!isProgramInDB) {
+            Statement statement = conn.createStatement();
+            String query = String.format(
+                    //TODO Correct multiple programs for one user
+                    "INSERT INTO program (program_name, user_id) " +
+                            "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
+                    program.getName(), user_name);
+            int rows = statement.executeUpdate(query);
+            System.out.printf("Added %d rows at table program\n", rows);
+        }
+    }
+
+    public void addHourInf(HourInf hourInf, String programName, String userName) throws SQLException {
+        //TODO check update hour info after all shit mistake
+        HourInf hourInfFromDB = getHourInf(programName, userName, hourInf.getCreationDate());
+        hourInf.mergeFinalizedHourInfo(hourInfFromDB);
+
+        String deleteQuery = "DELETE FROM hourinfo WHERE creationDate=\"" + Timestamp.valueOf(hourInf.getCreationDate())
+                + "\" AND program_id = (SELECT program_id FROM program WHERE program_name=\"" + programName +
+                "\" AND user_id=(SELECT user_id FROM users WHERE user_name=\"" + userName + "\"))";
+
+        try {
+            PreparedStatement deleteStatement = conn.prepareStatement(deleteQuery);
+            deleteStatement.executeUpdate();
+        } catch (SQLException e) {
+            Controller.getInstance().showErrorMessage("Replacing HourInfo failed\nCould not delete old information");
+            return;
+        }
 
         //TODO fails when different users have same program names
         String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate) " +
-                "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=? AND user_id=(SELECT user_id FROM users WHERE user_name=?)), ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=? " +
+                "AND user_id=(SELECT user_id FROM users WHERE user_name=?)), ?, ?, ?, ?, ?)";
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            ResourceUsage resource = hourInf.getResource();
             preparedStatement.setDouble(1, resource.getCpuUsage());
             preparedStatement.setLong(2, resource.getRamUsage());
-            preparedStatement.setString(3, program_name);
+            preparedStatement.setString(3, programName);
             preparedStatement.setString(4, userName);
             preparedStatement.setInt(5, resource.getThreadAmount());
             preparedStatement.setInt(6, hourInf.getTimeActSum());
@@ -74,13 +117,17 @@ public class DBManager {
             preparedStatement.setTimestamp(9, Timestamp.valueOf(hourInf.getCreationDate()));
             int rows = preparedStatement.executeUpdate();
             System.out.printf("Added %d rows at table resourceUsage\n", rows);
+        } catch (SQLException e) {
+            System.out.println("GOOSE!");
         }
     }
 
     public HourInf getHourInf(String programName, String userName, LocalDateTime Date) throws SQLException {
         HourInf hourInfo;
         Statement statement = conn.createStatement();
-        String sql = "SELECT * FROM hourinfo WHERE creationDate=" + Timestamp.valueOf(Date) + "AND program_id = (SELECT program_id FROM program WHERE program_name=" + programName + "AND user_id=(SELECT user_id FROM users WHERE user_name=" + userName + "))";
+        String sql = "SELECT * FROM hourinfo WHERE creationDate=\"" + Timestamp.valueOf(Date) +
+                "\" AND program_id = (SELECT program_id FROM program WHERE program_name=\"" + programName +
+                "\" AND user_id=(SELECT user_id FROM users WHERE user_name=\"" + userName + "\"))";
         ResultSet resultSet = statement.executeQuery(sql);
         if (resultSet.next()) {
             double cpu = resultSet.getDouble(2);
@@ -88,8 +135,11 @@ public class DBManager {
             int thread = resultSet.getInt(5);
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
+            int dataPackCount = resultSet.getInt(8);
             Timestamp creationDate = resultSet.getTimestamp(9);
-            hourInfo = new HourInf(timeSum, timeActSum, thread, cpu, ram, LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId()));
+            hourInfo = new HourInf(timeSum, timeActSum, thread, cpu, ram,
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId()),
+                    dataPackCount);
         } else {
             hourInfo = new HourInf();
         }
@@ -109,7 +159,8 @@ public class DBManager {
             int timeActSum = resultSet.getInt(6);
             int timeSum = resultSet.getInt(7);
             Timestamp creationDate = resultSet.getTimestamp(9);
-            hourInfo.add(new HourInf(timeSum, timeActSum, thread, cpu, ram, LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId())));
+            hourInfo.add(new HourInf(timeSum, timeActSum, thread, cpu, ram,
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(creationDate.getTime()), TimeZone.getDefault().toZoneId())));
         }
         return hourInfo;
     }
