@@ -1,26 +1,18 @@
 package dataRecieve;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class ProgramClass {//class which contains info about program
     private String name;
     private long ID;
     private int threadAmount;
     private double cpuUsage;
     private long ramUsage;
-    private Date date;
 
-    public ProgramClass(String name, long ID, int threadAmount, double cpuUsage, long ramUsage, Date date) {
+    public ProgramClass(String name, long ID, int threadAmount, double cpuUsage, long ramUsage) {
         this.name = name;
         this.ID = ID;
         this.threadAmount = threadAmount;
         this.cpuUsage = cpuUsage;
         this.ramUsage = ramUsage;
-        this.date =date;
-    }
-    public Date getDate() {
-        return date;
     }
 
     public String getName() {
@@ -43,7 +35,7 @@ public class ProgramClass {//class which contains info about program
         return ramUsage;
     }
 
-    //Method to merge databaseInteract.Program with equal names
+    //Method to merge databaseInteract.ProgramTracker with equal names
     //Merged ID will be the minimum ID of processes with the same name
     public void merge(long ID, int threadAmount, double cpuUsage, long ramUsage) {
         if (this.ID > ID)
