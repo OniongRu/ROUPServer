@@ -45,6 +45,31 @@ public class ProgramClass {//class which contains info about program
         this.ramUsage += ramUsage;
     }
 
+    //For testing only
+    public static ProgramClass aProgramClass() {
+        return new ProgramClass("", 0, 0, 0, 0);
+    }
+
+    public void withName(String name) {
+        this.name = name;
+    }
+
+    public void withID(long ID) {
+        this.ID = ID;
+    }
+
+    public void withThreadAmount(int threadAmount) {
+        this.threadAmount = threadAmount;
+    }
+
+    public void withCpuUsage(double cpuUsage) {
+        this.cpuUsage = cpuUsage;
+    }
+
+    public void withRamUsage(long ramUsage) {
+        this.ramUsage = ramUsage;
+    }
+
     public void print() {
         System.out.println("ID: " + ID);
         System.out.println("Name: " + name);

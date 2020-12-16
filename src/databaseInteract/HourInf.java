@@ -66,7 +66,6 @@ public class HourInf {
 
     public HourInf(int threadAmount, double cpuUsage, long ramUsage, LocalDateTime creationDate)
     {
-
         this.timeSum = 0;
         this.creationDate = creationDate;
         this.timeActSum = 0;
@@ -113,5 +112,46 @@ public class HourInf {
 
     public void finalizeObservations() {
         this.resource.finalizeObservations(dataPackCount);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof HourInf)) {
+            return false;
+        }
+
+        HourInf obj = (HourInf) o;
+
+        if (obj.resource.equals(this.resource) && obj.timeSum == this.timeSum && obj.dataPackCount == this.dataPackCount
+                && obj.timeActSum == this.timeActSum && obj.creationDate.equals(this.creationDate))
+            return true;
+        return false;
+    }
+
+    public static HourInf aHourInf() {
+        return new HourInf();
+    }
+
+    public void withCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public void withDataPackCount(int dataPackCount) {
+        this.dataPackCount = dataPackCount;
+    }
+
+    public void withTimeSum(int timeSum) {
+        this.timeSum = timeSum;
+    }
+
+    public void withActTimeSum(int timeActSum) {
+        this.timeActSum = timeActSum;
+    }
+
+    public void withResourceUsage(ResourceUsage resource) {
+        this.resource = resource;
     }
 }

@@ -145,7 +145,7 @@ public class ThreadController {
         //TODO - delete on release
         DBManager manager = new DBManager();
         String clientData = "Register client sender\n\nnYTQ4q/9v8UcKK64U2cz9g==";
-        ParseJSON.RegisterClSender(clientData);
+        ParseJSON.RegisterClSender(clientData, 1);
         //TODO - delete on release
 
         isServerToggledOff = false;

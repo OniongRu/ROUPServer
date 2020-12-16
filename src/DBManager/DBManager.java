@@ -226,6 +226,125 @@ public class DBManager {
         return new User(id, name, password, getProgramsByUserId(id));
     }
 
+    public Object executeRequest(String request) throws SQLException {
+        Statement statement = conn.createStatement();
+        Object resultSet = statement.executeQuery("SELECT" + request);
+        return resultSet;
+    }
+
+    public ArrayList<String> getAllUserNames() throws SQLException {
+        ArrayList<String> userNames = new ArrayList<>();
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT user_name FROM users");
+        while (resultSet.next()) {
+            userNames.add(resultSet.getString(1));
+        }
+        return userNames;
+    }
+
+    public ArrayList<String> getAllProgramNames() throws SQLException {
+        ArrayList<String> programNames = new ArrayList<>();
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT program_name FROM program");
+        while (resultSet.next()) {
+            programNames.add(resultSet.getString(1));
+        }
+        return programNames;
+    }
+
+    public ArrayList<HourInf> getHourInfsByProgramIDAndTimeInterval(int programID, LocalDateTime from, LocalDateTime to) throws SQLException {
+        ArrayList<HourInf> hourInfoList = new ArrayList<>();
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM hourinfo WHERE program_id = " + programID + " AND creationDate > \"" + Timestamp.valueOf(from) + "\" AND creationDate < \"" + Timestamp.valueOf(to) + "\"");
+        while (resultSet.next()) {
+            hourInfoList.add(new HourInf(
+                    resultSet.getInt(7),
+                    resultSet.getInt(6),
+                    resultSet.getInt(5),
+                    resultSet.getDouble(2),
+                    resultSet.getLong(3),
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(resultSet.getTimestamp(9).getTime()), TimeZone.getDefault().toZoneId()),
+                    resultSet.getInt(8)
+                    ));
+        }
+        return hourInfoList;
+    }
+
+    public ProgramTracker getProgramByNameAndUser(String programName, int userId, LocalDateTime from, LocalDateTime to) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM program WHERE program_name = \"" + programName + "\" AND user_id = " + userId);
+        ProgramTracker programTracker = null;
+        if (resultSet.next()) {
+            programTracker = new ProgramTracker(
+                                resultSet.getInt(1),
+                                resultSet.getString(2),
+                                getHourInfsByProgramIDAndTimeInterval(resultSet.getInt(1), from, to)
+                                );
+        }
+        if (resultSet.next()) {
+            throw new SQLException();
+        }
+        return programTracker;
+    }
+
+    public User getUserWithPrograms(String userName, ArrayList<String> programNames, LocalDateTime from, LocalDateTime to) throws SQLException {
+        ArrayList<ProgramTracker> programs = new ArrayList<>();
+
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT * FROM users WHERE user_name = \"" + userName + "\"");
+        User user = null;
+        if (resultSet.next()) {
+            ArrayList<ProgramTracker> programTrackers = new ArrayList<>();
+            for (String programName : programNames) {
+                programTrackers.add(getProgramByNameAndUser(programName, resultSet.getInt(1), from, to));
+            }
+            user = new User(   resultSet.getInt(1),
+                                    resultSet.getString(2),
+                                    resultSet.getBytes(3),
+                                    programTrackers
+                                );
+        }
+        else {
+            throw new SQLException();
+        }
+        if (resultSet.next()) {
+            throw new SQLException();
+        }
+        return user;
+    }
+
+    public int getPrivilege(String userName) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT privilege FROM users WHERE user_name = \"" + userName + "\"");
+        int privilege = 0;
+        if (resultSet.next()) {
+            privilege = resultSet.getInt(1);
+        }
+        else {
+            return -1;
+        }
+        if (resultSet.next()) {
+            throw new SQLException();
+        }
+        return privilege;
+    }
+
+    public int getPrivilege(int ID) throws SQLException {
+        Statement statement = conn.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT privilege FROM users WHERE user_id = " + ID);
+        int privilege;
+        if (resultSet.next()) {
+            privilege = resultSet.getInt(1);
+        }
+        else {
+            throw new SQLException();
+        }
+        if (resultSet.next()) {
+            throw new SQLException();
+        }
+        return privilege;
+    }
+
     private Connection getConnection() throws SQLException, IOException {
         Properties props = new Properties();
         try (InputStream in = Files.newInputStream(Paths.get("database.properties"))) {

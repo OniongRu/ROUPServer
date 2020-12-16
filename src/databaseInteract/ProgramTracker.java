@@ -10,15 +10,15 @@ import java.util.Calendar;
 public class ProgramTracker {
     private long ID;
     private String name;
-    private ArrayList<HourInf> HourWork;
+    private ArrayList<HourInf> hourWork;
 
     //TODO - change array list to set here for a quicker access to a specified hour. Maybe do the same with programTracker in users
-    public ArrayList<HourInf> getHourWork() {  return HourWork;   }
+    public ArrayList<HourInf> getHourWork() {  return hourWork;   }
 
     public void print(){
         System.out.println("Program ID: " + ID);
         System.out.println("Program name: " + name);
-        for (HourInf hourProgramInfo : HourWork){
+        for (HourInf hourProgramInfo : hourWork){
             hourProgramInfo.print();
         }
         System.out.println("---------");
@@ -31,8 +31,8 @@ public class ProgramTracker {
         date = date.minusSeconds(date.getSecond());
         HourInf someHour = isHourInArray(date);
         if(someHour == null) {
-            HourWork.add(new HourInf(date));
-            someHour = HourWork.get(HourWork.size() - 1);
+            hourWork.add(new HourInf(date));
+            someHour = hourWork.get(hourWork.size() - 1);
         }
         this.name = programClass.getName();
         this.ID = programClass.getID();
@@ -55,19 +55,18 @@ public class ProgramTracker {
     {
         this.ID = ID;
         this.name = name;
-        this.HourWork = new ArrayList<>();
+        this.hourWork = new ArrayList<>();
     }
 
     public ProgramTracker(long ID, String name, ArrayList<HourInf> hourInf) {
         this.ID = ID;
         this.name = name;
-        this.HourWork = new ArrayList<>();
-        this.HourWork = hourInf;
+        this.hourWork = hourInf;
     }
 
     private HourInf isHourInArray(LocalDateTime date)
     {
-        for (HourInf hour: HourWork) {
+        for (HourInf hour: hourWork) {
             if(hour.getCreationDate().equals(date)) {
                 return hour;
             }
@@ -76,8 +75,43 @@ public class ProgramTracker {
     }
 
     public void finalizeObservations() {
-        for (HourInf programHourInfo : HourWork){
+        for (HourInf programHourInfo : hourWork){
             programHourInfo.finalizeObservations();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof ProgramTracker)) {
+            return false;
+        }
+
+        ProgramTracker obj = (ProgramTracker) o;
+
+        if (obj.ID == this.ID && obj.hourWork.equals(this.hourWork) && obj.name == this.name)
+            return true;
+        return false;
+    }
+
+    ProgramTracker() {
+    }
+
+    public static ProgramTracker aProgramTracker() {
+        return new ProgramTracker();
+    }
+
+    public void withID(long ID) {
+        this.ID = ID;
+    }
+
+    public void withName(String name) {
+        this.name = name;
+    }
+
+    public void withHourWork(ArrayList<HourInf> hourWork) {
+        this.hourWork = hourWork;
     }
 }

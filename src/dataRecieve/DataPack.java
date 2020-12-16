@@ -15,6 +15,38 @@ public class DataPack {
     //list of programs
     private ArrayList<ProgramClass> programs;
 
+    //For testing only
+    DataPack() {
+    }
+
+    //Methods with are created for testing only
+    public static DataPack aDataPack() {
+        return new DataPack();
+    }
+
+    public void withName(String userName) {
+        this.userName = userName;
+    }
+
+    public void withPassword(byte[] securedPassword) {
+        this.securedPassword = securedPassword;
+    }
+
+    public void withDateTime(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public void withActiveWindowProcessName(String activeWindowProcessName) {
+        this.activeWindowProcessName = activeWindowProcessName;
+    }
+
+    public void withCollectInterval(int collectInterval) {
+        this.collectInterval = collectInterval;
+    }
+    public void withPrograms(ArrayList<ProgramClass> programs) {
+        this.programs = programs;
+    }
+
     public String getActiveWindowProcessName(){ return activeWindowProcessName; }
 
     public byte[] getPassword() { return securedPassword; }
