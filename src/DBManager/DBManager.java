@@ -202,6 +202,7 @@ public class DBManager {
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT password FROM users WHERE user_name=\"" + userName + "\"");
         if (!resultSet.next() || !Arrays.equals(resultSet.getBytes(1), password)) {
+            byte[]check= resultSet.getBytes(1);
             return false;
         }
         if (resultSet.next()) {
