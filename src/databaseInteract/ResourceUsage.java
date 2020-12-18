@@ -1,8 +1,15 @@
 package databaseInteract;
 
+import dataSend.Observable;
+
 public class ResourceUsage {
+    @Observable
     private int threadAmount;
+
+    @Observable
     private double cpuUsage;
+
+    @Observable
     private long ramUsage;
 
     public void print(){

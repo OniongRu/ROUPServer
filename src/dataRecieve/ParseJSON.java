@@ -34,7 +34,7 @@ public class ParseJSON {
     }
 
     public static ObserverData HandleRequest(String query) {
-        query = query.substring(10);
+        query = query.substring(9);
         GsonBuilder gsonBuilder = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() {
             @Override
             public LocalDateTime deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {

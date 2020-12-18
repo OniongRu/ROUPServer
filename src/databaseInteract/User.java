@@ -1,6 +1,7 @@
 package databaseInteract;
 
 import dataRecieve.ProgramClass;
+import dataSend.Observable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,11 +9,17 @@ import java.util.Arrays;
 
 //In construction. Not working yet
 public class User {
+    @Observable
     private int ID;
+
+    @Observable
     private String name;
+
     private byte[] password;
 
+
     //TODO - change arraylist to map
+    @Observable
     private ArrayList<ProgramTracker> programs;
 
     public String getName() {
