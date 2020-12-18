@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class ThreadController {
@@ -85,22 +86,7 @@ public class ThreadController {
                 Map<String, User> users = converter.getUsers();
                 DBManager manager = new DBManager();
 
-                /*
-                //That's for yuriy - creates Json file from users
-                Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
-                    @Override
-                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
-                        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
-                        return new JsonPrimitive(formatter.format(src));
-                    }
-                }).create();
-
-                dataSend.DataPack dp = new dataSend.DataPack(users.values());
-                String gooseJson = gson.toJson(dp);
-                */
-
-
-                //That's how we write to DB
+                //Writing info from client sender to database
                 for (User user : users.values()) {
                     user.finalizeObservations();
                     user.print();
@@ -120,32 +106,17 @@ public class ThreadController {
                         Controller.getInstance().showErrorMessage("Writing to DB failed");
                     }
                 }
-
-                //Now try reading from DB
-                /*
-                //List<String> users = Arrays.asList("gooseTheFirst", "gooseTheSecond", "gooseTheThird");
-                Set<User> userSetFromDB = new HashSet<User>();
-                for (var user : users) {
-                    try {
-                        userSetFromDB.add(manager.getUser(user));
-                    } catch (SQLException e) {
-                        Controller.getInstance().showErrorMessage("Could not read user " + user + "\nfrom DB", Paint.valueOf("#9de05c"));
-                    }
-                }*/
-                /*for (User user : userSetFromDB) {
-                    user.print();
-                }*/
             }
         };
 
-        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 30, 30, SECONDS);
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 24, 24, HOURS);
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
         //TODO - delete on release
         DBManager manager = new DBManager();
         String clientData = "Register client sender\n\nnYTQ4q/9v8UcKK64U2cz9g==";
-        ParseJSON.RegisterClSender(clientData);
+        ParseJSON.RegisterClSender(clientData, 1);
         //TODO - delete on release
 
         isServerToggledOff = false;

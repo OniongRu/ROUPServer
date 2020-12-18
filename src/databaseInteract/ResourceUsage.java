@@ -1,10 +1,16 @@
 package databaseInteract;
 
-public class ResourceUsage {
-    private int threadAmount;
-    private double cpuUsage;
-    private long ramUsage;
+import dataSend.Observable;
 
+public class ResourceUsage {
+    @Observable
+    private int threadAmount;
+
+    @Observable
+    private double cpuUsage;
+
+    @Observable
+    private long ramUsage;
 
     public void print(){
         System.out.println("Thread amount: " + threadAmount);
@@ -55,6 +61,36 @@ public class ResourceUsage {
         this.cpuUsage /= dataPackCount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof ResourceUsage)) {
+            return false;
+        }
+
+        ResourceUsage obj = (ResourceUsage) o;
+
+        return obj.ramUsage == this.ramUsage && obj.cpuUsage == this.cpuUsage && obj.threadAmount == this.threadAmount;
+    }
+
+    //For testing
+    public static ResourceUsage aResourceUsage() {
+        return new ResourceUsage();
+    }
+
+    public void withThreadAmount(int threadAmount) {
+        this.threadAmount = threadAmount;
+    }
+
+    public void withCpuUsage(double cpuUsage) {
+        this.cpuUsage = cpuUsage;
+    }
+
+    public void withRamUsage(long ramUsage) {
+        this.ramUsage = ramUsage;
+    }
 }
 
 
