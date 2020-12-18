@@ -2,18 +2,26 @@ package databaseInteract;
 
 
 import dataRecieve.ProgramClass;
+import dataSend.Observable;
 
 import java.time.LocalDateTime;
 
 
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
 public class HourInf {
-    //DateFormat outputformat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
-
+    @Observable
     private LocalDateTime creationDate;
+
+    @Observable
     private int dataPackCount;
+
+    @Observable
     private int timeSum;
+
+    @Observable
     private int timeActSum;
+
+    @Observable
     private ResourceUsage resource;
 
     public int getTimeSum() {

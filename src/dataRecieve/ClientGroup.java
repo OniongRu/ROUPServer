@@ -5,6 +5,8 @@ import GUI.Controller;
 import GUI.PrettyException;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
+import dataSend.DataObservableExposeStrategy;
+import dataSend.UserDataWrapper;
 import dataSend.UserProgramNamesWrapper;
 import databaseInteract.User;
 
@@ -16,6 +18,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 
 //класс объекта, работающего в отдельном потоке, взаимодействующий с Сокетами,
@@ -159,7 +164,6 @@ public class ClientGroup extends Thread{
         }
 
         String clientData = new String(requestBuffer.array()).trim();
-        //clientData = clientData.substring(4);
         requestBuffer.clear();
         //clientData = "NeedJson\n {\"name\": \"\", \"password\": \"nYTQ4q/9v8UcKK64U2cz9g==\", \"users\": [\"Goose\"], \"programs\":[\"sihost.exe\", \"svchost.exe\", \"idea64.exe\"], \"from\": \"00:00:00, 01.01.2000\", \"to\": \"00:00:00, 01.01.2050\"}";
 
@@ -212,20 +216,15 @@ public class ClientGroup extends Thread{
                 sendErrorRespond(client);
                 return;
             }
-            boolean isObserverValid = true;
+            int isObserverValid = 0;
             try {
-                isObserverValid = manager.isUserValid(observer.getName(), observer.getPassword());
-                //TODO - delete this when password encryption is done
-                isObserverValid = true;
+                isObserverValid = manager.isUserValid(observer.getName(), observer.getPassword()) ? 1 : 0;
             } catch (SQLException e) {
                 Controller.getInstance().showErrorMessage("Could not verify observer's \nname and password");
                 sendErrorRespond(client);
                 return;
             }
-            if (!isObserverValid) {
-                sendErrorRespond(client);
-                return;
-            }
+
             ArrayList<User> usersList = new ArrayList<>();
             for (String userName : observer.getUsers()) {
                 try {
@@ -234,8 +233,20 @@ public class ClientGroup extends Thread{
                     Controller.getInstance().showErrorMessage("Could not get info requested by observer");
                 }
             }
-            Gson gson = new Gson();
-            String jsonString = gson.toJson(usersList);
+
+            GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new DataObservableExposeStrategy());
+            gsonBuilder.registerTypeAdapter(
+                LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                    @Override
+                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+                        return new JsonPrimitive(formatter.format(src));
+                    }
+                });
+            Gson gson = gsonBuilder.create();
+            String jsonString = gson.toJson(new UserDataWrapper(isObserverValid, 1, usersList));
+            respondBuffer.put(jsonString.getBytes(StandardCharsets.UTF_8));
+            respondBuffer.flip();
             try {
                 client.write(respondBuffer);
             } catch (IOException e) {
@@ -249,7 +260,7 @@ public class ClientGroup extends Thread{
             } else {
                 respondBuffer.put("Register failed".getBytes(StandardCharsets.UTF_8));
             }
-        respondBuffer.flip();
+            respondBuffer.flip();
             try {
                 client.write(respondBuffer);
             } catch (IOException e) {
@@ -276,11 +287,6 @@ public class ClientGroup extends Thread{
 
             LoginPasswordWrapper LPWrapper = null;
 
-            LoginPasswordWrapper LPWrapper2 = new LoginPasswordWrapper();
-            LPWrapper2.setName("");
-            LPWrapper2.setPassword(new byte[16]);
-            String json = gson.toJson(LPWrapper2);
-
             try {
                 LPWrapper = gson.fromJson(clientData, LoginPasswordWrapper.class);
             } catch (JsonSyntaxException e) {
@@ -301,11 +307,11 @@ public class ClientGroup extends Thread{
 
             String respond;
             if (!isObserverValid) {
-                respond = gson.toJson(new UserProgramNamesWrapper(1, 0, null, null));
+                respond = gson.toJson(new UserProgramNamesWrapper(0, 0, null, null));
             }
             else {
                 try {
-                    respond = gson.toJson(new UserProgramNamesWrapper(1, 1, manager.getAllUserNames(), manager.getAllProgramNames()));
+                    respond = gson.toJson(new UserProgramNamesWrapper(0, 1, manager.getAllUserNames(), manager.getAllProgramNames()));
                 } catch (SQLException e) {
                     Controller.getInstance().showErrorMessage("Error getting users or programs by observer's request");
                     sendErrorRespond(client);

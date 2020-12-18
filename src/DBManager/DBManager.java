@@ -17,10 +17,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class DBManager {
@@ -232,8 +229,8 @@ public class DBManager {
         return resultSet;
     }
 
-    public ArrayList<String> getAllUserNames() throws SQLException {
-        ArrayList<String> userNames = new ArrayList<>();
+    public Set<String> getAllUserNames() throws SQLException {
+        Set<String> userNames = new HashSet<>();
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT user_name FROM users");
         while (resultSet.next()) {
@@ -242,8 +239,8 @@ public class DBManager {
         return userNames;
     }
 
-    public ArrayList<String> getAllProgramNames() throws SQLException {
-        ArrayList<String> programNames = new ArrayList<>();
+    public Set<String> getAllProgramNames() throws SQLException {
+        Set<String> programNames = new HashSet<>();
         Statement statement = conn.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT program_name FROM program");
         while (resultSet.next()) {

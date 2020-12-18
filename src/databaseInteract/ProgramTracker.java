@@ -1,6 +1,7 @@
 package databaseInteract;
 
 import dataRecieve.ProgramClass;
+import dataSend.Observable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,8 +9,13 @@ import java.util.Calendar;
 
 //In construction. Not working yet
 public class ProgramTracker {
+    @Observable
     private long ID;
+
+    @Observable
     private String name;
+
+    @Observable
     private ArrayList<HourInf> hourWork;
 
     //TODO - change array list to set here for a quicker access to a specified hour. Maybe do the same with programTracker in users
