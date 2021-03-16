@@ -11,13 +11,15 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
-public class Main extends Application {
+public class Main extends Application
+{
 
     public static Stage window;
-    private static Controller controller = null;
     private static final String stylePath = "GUI/style/";
 
-    @Override public void start(Stage window) throws Exception {
+    @Override
+    public void start(Stage window) throws Exception
+    {
         Platform.setImplicitExit(false);
         Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
         window.getIcons().add(new Image(stylePath + "knifeGoose.png"));
@@ -27,32 +29,27 @@ public class Main extends Application {
         window.setResizable(false);
         window.setScene(windowScene);
 
-        window.setOnCloseRequest(new EventHandler<WindowEvent>() {
+        window.setOnCloseRequest(new EventHandler<WindowEvent>()
+        {
             @Override
-            public void handle(WindowEvent t) {
-                if (controller != null) {
-                    controller.closeApp();
-                } else {
+            public void handle(WindowEvent t)
+            {
+                if (Controller.getInstance() != null)
+                {
+                    Controller.getInstance().closeApp();
+                } else
+                {
                     Platform.exit();
                     System.exit(0);
                 }
             }
         });
-
-        /*window.setOnShown(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent t) {
-                controller.showErrorMessage();
-            }
-        });*/
-
-        //controller = new Controller();
-        //controller.setBufErrorMessage("AA!");
         window.show();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         launch(args);
-        controller.initialize();
+        Controller.getInstance().initialize();
     }
 }

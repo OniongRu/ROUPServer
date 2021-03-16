@@ -11,18 +11,24 @@ import java.util.*;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
+
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DataPackToUserTest {
+public class DataPackToUserTest
+{
     ArrayList<ProgramClass> programList = new ArrayList<>();
     ArrayList<DataPack> dataPackList = new ArrayList<>();
     Map<String, User> userList = new HashMap<>();
     ArrayList<ProgramTracker> programTrackerList = new ArrayList<>();
+    ResourceUsage expectedResourceUsage1Hour1;
+    ResourceUsage expectedResourceUsage1Hour2;
+    HourInf expectedTracker1Hour1;
 
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         ProgramClass testProgram1 = ProgramClass.aProgramClass();
         testProgram1.withName("GooseProgram");
         testProgram1.withCpuUsage(100);
@@ -77,6 +83,7 @@ public class DataPackToUserTest {
         expectedResourceUsage1Hour1.withThreadAmount(22);
         expectedResourceUsage1Hour1.withCpuUsage(100);
         expectedResourceUsage1Hour1.withRamUsage(1);
+        this.expectedResourceUsage1Hour1 = expectedResourceUsage1Hour1;
 
         HourInf expectedTracker1Hour1 = HourInf.aHourInf();
         expectedTracker1Hour1.withDataPackCount(2);
@@ -84,6 +91,7 @@ public class DataPackToUserTest {
         expectedTracker1Hour1.withTimeSum(20000);
         expectedTracker1Hour1.withActTimeSum(10000);
         expectedTracker1Hour1.withResourceUsage(expectedResourceUsage1Hour1);
+        this.expectedTracker1Hour1 = expectedTracker1Hour1;
 
         ProgramTracker expectedTracker1 = ProgramTracker.aProgramTracker();
         expectedTracker1.withID(66996699);
@@ -94,6 +102,7 @@ public class DataPackToUserTest {
         expectedResourceUsage1Hour2.withThreadAmount(3);
         expectedResourceUsage1Hour2.withCpuUsage(0);
         expectedResourceUsage1Hour2.withRamUsage(999999);
+        this.expectedResourceUsage1Hour2 = expectedResourceUsage1Hour2;
 
         HourInf expectedTracker1Hour2 = HourInf.aHourInf();
         expectedTracker1Hour2.withDataPackCount(1);
@@ -133,16 +142,34 @@ public class DataPackToUserTest {
     }
 
     @Test
-    public void transformPacks() {
+    public void transformPacks()
+    {
         DataPackToUser transformer = new DataPackToUser(new LinkedList<DataPack>(dataPackList), new HashMap<String, User>());
         transformer.TransformPacks();
         transformer.getUsers().get("Goose").finalizeObservations();
 
-        int a = transformer.getUsers().get("Goose").hashCode();
-        int b = userList.get("Goose").hashCode();
-        //Hash codes are different, but equal function returns true. Figure out why
-
         Assert.assertTrue(transformer.getUsers().get("Goose").equals(userList.get("Goose")));
         //assert(transformer.getUsers().is(userList));
+    }
+
+    @Test
+    public void resourceUsageConstructorTest1()
+    {
+        ResourceUsage resourceUsage = new ResourceUsage(22, 100, 1);
+        Assert.assertTrue(resourceUsage.equals(expectedResourceUsage1Hour1));
+    }
+
+    @Test
+    public void resourceUsageConstructorTest2()
+    {
+        ResourceUsage resourceUsage = new ResourceUsage(3, 0, 999999);
+        Assert.assertTrue(resourceUsage.equals(expectedResourceUsage1Hour2));
+    }
+
+    @Test
+    public void hourInfoConstructorTest2()
+    {
+        HourInf hourInf1 = new HourInf(20000, 10000, expectedResourceUsage1Hour1.getThreadAmount(), expectedResourceUsage1Hour1.getCpuUsage(), expectedResourceUsage1Hour1.getRamUsage(), LocalDateTime.of(2020, 12, 12, 21, 0, 0), 2);
+        Assert.assertTrue(hourInf1.equals(expectedTracker1Hour1));
     }
 }

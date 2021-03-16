@@ -109,7 +109,7 @@ public class ThreadController {
             }
         };
 
-        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 24, 24, HOURS);
+        writerHandle = scheduler.scheduleAtFixedRate(databaseWriter, 300, 300, SECONDS);
     }
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
@@ -129,7 +129,7 @@ public class ThreadController {
             sChannel.register(sSelector, SelectionKey.OP_ACCEPT);
             sChannel.socket().bind(new InetSocketAddress(PORT));
         }catch(IOException e){
-            throw new PrettyException(e, "Can't launch: fail opening connection");
+            throw new PrettyException(e, "Fail opening connection. Try changing port");
         }
         writeUsersToDB();
         while(true) {

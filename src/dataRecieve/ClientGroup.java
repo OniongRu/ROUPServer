@@ -25,37 +25,45 @@ import java.util.*;
 
 //класс объекта, работающего в отдельном потоке, взаимодействующий с Сокетами,
 //записанными в его селектор
-public class ClientGroup extends Thread{
+public class ClientGroup extends Thread
+{
     private Selector SelectorS;
     int PORT;
     private int clientAm = 0;
     private Queue<DataPack> dataPackQueue;
     private boolean isCloseSent = false;
 
-    private void incrementCnt(){
+    private void incrementCnt()
+    {
         clientAm++;
     }
 
-    private void decrementCnt(){
+    private void decrementCnt()
+    {
         clientAm--;
     }
 
-    private void resetCnt(){
+    private void resetCnt()
+    {
         clientAm = 0;
     }
 
-    public int getClientAm(){
+    public int getClientAm()
+    {
         return clientAm;
     }
 
     //конструктор
-    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws PrettyException {
-        try {
+    public ClientGroup(SocketChannel ServElSoc, int PORT, Queue<DataPack> dataPackQueue) throws PrettyException
+    {
+        try
+        {
             SelectorS = Selector.open();
             ServElSoc.configureBlocking(false);
             ServElSoc.register(SelectorS, SelectionKey.OP_READ);
             System.out.println(ServElSoc.getRemoteAddress() + " ♫CONNECTED♫");
-        }catch(IOException e){
+        } catch (IOException e)
+        {
             throw new PrettyException(e, "Error creating ClientGroup");
         }
         this.PORT = PORT;
@@ -66,29 +74,38 @@ public class ClientGroup extends Thread{
     }
 
     //добавление нового сокета в селектор
-    public void AddSocket(SocketChannel ClientS) throws IOException {
+    public void AddSocket(SocketChannel ClientS) throws IOException
+    {
         ClientS.configureBlocking(false);
         ClientS.register(SelectorS, SelectionKey.OP_READ);
-        System.out.println(ClientS.getRemoteAddress()+" ♫CONNECTED♫");
+        System.out.println(ClientS.getRemoteAddress() + " ♫CONNECTED♫");
         incrementCnt();
         SelectorS.wakeup();
     }
 
-    public void run() {
-        try {
+    public void run()
+    {
+        try
+        {
             isCloseSent = false;
-            while (true) {
+            while (true)
+            {
 
-                try {
+                try
+                {
                     SelectorS.select(); //ожидание действий от клиентов
-                }catch(IOException e){
+                } catch (IOException e)
+                {
                     throw new PrettyException(e, "Error managing client group");
                 }
 
-                if (isCloseSent){
-                    try{
-                    closeClientGroup();
-                    }catch(IOException e){
+                if (isCloseSent)
+                {
+                    try
+                    {
+                        closeClientGroup();
+                    } catch (IOException e)
+                    {
                         throw new PrettyException(e, "Error closing client group");
                     }
                     return;
@@ -96,21 +113,26 @@ public class ClientGroup extends Thread{
 
                 Set<SelectionKey> selectedKeys = SelectorS.selectedKeys(); //создание ключей для соединений, от которых пришли запросы
                 Iterator<SelectionKey> iter = selectedKeys.iterator();
-                while (iter.hasNext()) {
+                while (iter.hasNext())
+                {
                     SelectionKey key = iter.next();
-                    if (key.isReadable()) {
+                    if (key.isReadable())
+                    {
                         takeGson(key);
                     }
                     iter.remove();
                 }
-           }
-        }catch (PrettyException e) {
+            }
+        } catch (PrettyException e)
+        {
             throw new RuntimeException(e.getPrettyMessage());
         }
     }
 
-    public void closeClientGroup() throws IOException {
-        if (SelectorS != null) {
+    public void closeClientGroup() throws IOException
+    {
+        if (SelectorS != null)
+        {
             SelectorS.close();
         }
         SelectorS = null;
@@ -119,7 +141,8 @@ public class ClientGroup extends Thread{
         dataPackQueue = null;
     }
 
-    public void sendClose(){
+    public void sendClose()
+    {
         isCloseSent = true;
         SelectorS.wakeup();
     }
@@ -147,18 +170,23 @@ public class ClientGroup extends Thread{
     //In this application there is an agreement "EndThisConnection" in a beginning means stop signal
     //Beginning "Client data\n" means that server is about to receive DataPack
     //Beginning "Request\n" means that server is about to receive a query for an administrator's client
-    private void takeGson(SelectionKey key) {
+    private void takeGson(SelectionKey key)
+    {
         SocketChannel client = (SocketChannel) key.channel();
         ByteBuffer requestBuffer = ByteBuffer.allocate(1024 * 10);
         requestBuffer.clear();
-        try {
+        try
+        {
             client.read(requestBuffer);
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             decrementCnt();
-            try {
+            try
+            {
                 System.out.println(((SocketChannel) key.channel()).getRemoteAddress() + " #DISCONNECTED# from thread" + currentThread().getId() + " ");
                 key.channel().close();
-            } catch (IOException ioException) {
+            } catch (IOException ioException)
+            {
                 ioException.printStackTrace();
             }
         }
@@ -169,116 +197,146 @@ public class ClientGroup extends Thread{
 
         ByteBuffer respondBuffer = ByteBuffer.allocate(1024 * 10);
 
-        if (clientData.equals("EndThisConnection")) {//TODO Add types of getting data
+        if (clientData.equals("EndThisConnection"))
+        {//TODO Add types of getting data
             decrementCnt();
             ParseJSON.EndConnection(key);
-        } else if (clientData.startsWith("Client data\n")) {
+        } else if (clientData.startsWith("Client data\n"))
+        {
             System.out.println(clientData);
             DataPack dataPackFromUser = ParseJSON.ClSenderData(clientData);
             DBManager manager = new DBManager();
-            try {
-                if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword())) {
+            try
+            {
+                if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword()))
+                {
                     dataPackQueue.add(dataPackFromUser);
                     respondBuffer.put("Data is being processed".getBytes(StandardCharsets.UTF_8));
-                } else {
+                } else
+                {
                     respondBuffer.put("Data is ignored".getBytes(StandardCharsets.UTF_8));
-                    }
-                } catch (SQLException e) {
+                }
+            } catch (SQLException e)
+            {
                 respondBuffer.put("Data is ignored".getBytes(StandardCharsets.UTF_8));
                 Controller.getInstance().showErrorMessage("Could not check if user exists in database");
-                } finally {
+            } finally
+            {
                 respondBuffer.flip();
-                    try {
-                        client.write(respondBuffer);
-                    } catch (IOException e) {
-                        Controller.getInstance().showErrorMessage("Could not send respond client\ndata status");
-                    }
+                try
+                {
+                    client.write(respondBuffer);
+                } catch (IOException e)
+                {
+                    Controller.getInstance().showErrorMessage("Could not send respond client\ndata status");
                 }
-        }
-        else if (clientData.startsWith("NeedJson\n")) {
+            }
+        } else if (clientData.startsWith("NeedJson\n"))
+        {
             ObserverData observer = ParseJSON.HandleRequest(clientData);
             //TODO handle requests
-            if (observer == null) {
+            if (observer == null)
+            {
                 sendErrorRespond(client);
                 return;
             }
 
             DBManager manager = new DBManager();
             int privilege = 0;
-            try {
+            try
+            {
                 privilege = manager.getPrivilege(observer.getName());
-            } catch (SQLException e) {
+            } catch (SQLException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not get user's privilege");
                 sendErrorRespond(client);
                 return;
             }
-            if (privilege != 1) {
+            if (privilege != 1)
+            {
                 sendErrorRespond(client);
                 return;
             }
             int isObserverValid = 0;
-            try {
+            try
+            {
                 isObserverValid = manager.isUserValid(observer.getName(), observer.getPassword()) ? 1 : 0;
-            } catch (SQLException e) {
+            } catch (SQLException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not verify observer's \nname and password");
                 sendErrorRespond(client);
                 return;
             }
 
             ArrayList<User> usersList = new ArrayList<>();
-            for (String userName : observer.getUsers()) {
-                try {
+            for (String userName : observer.getUsers())
+            {
+                try
+                {
                     usersList.add(manager.getUserWithPrograms(userName, observer.getPrograms(), observer.getFrom(), observer.getTo()));
-                } catch(SQLException e) {
+                } catch (SQLException e)
+                {
                     Controller.getInstance().showErrorMessage("Could not get info requested by observer");
                 }
             }
 
             GsonBuilder gsonBuilder = new GsonBuilder().setExclusionStrategies(new DataObservableExposeStrategy());
             gsonBuilder.registerTypeAdapter(
-                LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
-                    @Override
-                    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
-                        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
-                        return new JsonPrimitive(formatter.format(src));
-                    }
-                });
+                    LocalDateTime.class, new JsonSerializer<LocalDateTime>()
+                    {
+                        @Override
+                        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context)
+                        {
+                            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+                            return new JsonPrimitive(formatter.format(src));
+                        }
+                    });
             Gson gson = gsonBuilder.create();
             String jsonString = gson.toJson(new UserDataWrapper(isObserverValid, 1, usersList));
             respondBuffer.put(jsonString.getBytes(StandardCharsets.UTF_8));
             respondBuffer.flip();
-            try {
+            try
+            {
                 client.write(respondBuffer);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not send respond observer\n");
             }
-        }
-        else if (clientData.startsWith("Register client sender\n")) {
+        } else if (clientData.startsWith("Register client sender\n"))
+        {
             //Respond register status
-            if (ParseJSON.RegisterClSender(clientData)) {
+            if (ParseJSON.RegisterClSender(clientData))
+            {
                 respondBuffer.put("Register successful".getBytes(StandardCharsets.UTF_8));
-            } else {
+            } else
+            {
                 respondBuffer.put("Register failed".getBytes(StandardCharsets.UTF_8));
             }
             respondBuffer.flip();
-            try {
+            try
+            {
                 client.write(respondBuffer);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not send respond client\nregister status");
             }
-        }
-        else if (clientData.startsWith("Initialize observer\n")) {
+        } else if (clientData.startsWith("Initialize observer\n"))
+        {
             clientData = clientData.substring(20);
 
-            GsonBuilder gsonBuilder = new GsonBuilder().registerTypeAdapter(byte[].class, new JsonDeserializer<byte[]>() {
+            GsonBuilder gsonBuilder = new GsonBuilder().registerTypeAdapter(byte[].class, new JsonDeserializer<byte[]>()
+            {
                 @Override
-                public byte[] deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+                public byte[] deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException
+                {
                     return Base64.getDecoder().decode(json.getAsString());
                 }
             });
-            gsonBuilder.registerTypeAdapter(byte[].class, new JsonSerializer<byte[]>() {
+            gsonBuilder.registerTypeAdapter(byte[].class, new JsonSerializer<byte[]>()
+            {
                 @Override
-                public JsonElement serialize(byte[] bytes, Type type, JsonSerializationContext jsonSerializationContext) {
+                public JsonElement serialize(byte[] bytes, Type type, JsonSerializationContext jsonSerializationContext)
+                {
                     //System.out.println(bytesToHex(bytes));
                     return new JsonPrimitive(Base64.getEncoder().encodeToString(bytes));
                 }
@@ -287,9 +345,11 @@ public class ClientGroup extends Thread{
 
             LoginPasswordWrapper LPWrapper = null;
 
-            try {
+            try
+            {
                 LPWrapper = gson.fromJson(clientData, LoginPasswordWrapper.class);
-            } catch (JsonSyntaxException e) {
+            } catch (JsonSyntaxException e)
+            {
                 Controller.getInstance().showErrorMessage("Error parsing JSon from observer");
                 sendErrorRespond(client);
                 return;
@@ -297,22 +357,27 @@ public class ClientGroup extends Thread{
 
             DBManager manager = new DBManager();
             boolean isObserverValid = false;
-            try {
+            try
+            {
                 isObserverValid = manager.isUserValid(LPWrapper.getName(), LPWrapper.getPassword()) && manager.getPrivilege(LPWrapper.getName()) == 1;
-            } catch (SQLException e) {
+            } catch (SQLException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not verify observer");
                 sendErrorRespond(client);
                 return;
             }
 
             String respond;
-            if (!isObserverValid) {
+            if (!isObserverValid)
+            {
                 respond = gson.toJson(new UserProgramNamesWrapper(0, 0, null, null));
-            }
-            else {
-                try {
+            } else
+            {
+                try
+                {
                     respond = gson.toJson(new UserProgramNamesWrapper(0, 1, manager.getAllUserNames(), manager.getAllProgramNames()));
-                } catch (SQLException e) {
+                } catch (SQLException e)
+                {
                     Controller.getInstance().showErrorMessage("Error getting users or programs by observer's request");
                     sendErrorRespond(client);
                     return;
@@ -320,9 +385,11 @@ public class ClientGroup extends Thread{
             }
             respondBuffer.put(respond.getBytes(StandardCharsets.UTF_8));
             respondBuffer.flip();
-            try {
+            try
+            {
                 client.write(respondBuffer);
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 Controller.getInstance().showErrorMessage("Could not send respond to server");
                 sendErrorRespond(client);
                 return;
@@ -330,13 +397,16 @@ public class ClientGroup extends Thread{
         }
     }
 
-    public void sendErrorRespond(SocketChannel client) {
+    public void sendErrorRespond(SocketChannel client)
+    {
         ByteBuffer respondBuffer = ByteBuffer.allocate(1024 * 10);
         respondBuffer.put("Error".getBytes(StandardCharsets.UTF_8));
         respondBuffer.flip();
-        try {
+        try
+        {
             client.write(respondBuffer);
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             Controller.getInstance().showErrorMessage("Could not send respond observer\nregister status");
         }
     }

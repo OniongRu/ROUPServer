@@ -24,7 +24,8 @@ import java.awt.event.MouseAdapter;
 import java.io.File;
 import java.io.IOException;
 
-public class Controller {
+public class Controller
+{
     @FXML
     private AnchorPane pane;
 
@@ -38,10 +39,10 @@ public class Controller {
     private ImageView closeButton;
 
     @FXML
-    private TextField nameField;
+    private TextField loginField;
 
     @FXML
-    private TextField portField;
+    private TextField passwordField;
 
     @FXML
     private Text statusText;
@@ -60,10 +61,6 @@ public class Controller {
 
     private static final String stylePath = "GUI/style/";
 
-    private static int port = 5020;
-
-    private static final int DEFAULTPORT = 5020;
-
     private String bufErrorMessage = null;
 
     ThreadController thController = null;
@@ -72,22 +69,24 @@ public class Controller {
 
     private static Controller thisController = null;
 
-    public Controller() {
+    public Controller()
+    {
         thController = new ThreadController();
         thisController = this;
     }
 
     @FXML
-    private void onCloseClicked(MouseEvent event) {
+    private void onCloseClicked(MouseEvent event)
+    {
         window = (Stage) (closeButton).getScene().getWindow();
         if (thController.getIsServerToggledOff())
         {
             closeApp();
-        }
-        else
+        } else
         {
             window.hide();
-            if (!isTrayIconExist) {
+            if (!isTrayIconExist)
+            {
                 javax.swing.SwingUtilities.invokeLater(this::addAppToTray);
                 isTrayIconExist = true;
             }
@@ -95,47 +94,78 @@ public class Controller {
     }
 
     @FXML
-    private void onMinimizeClicked(MouseEvent event) {
+    private void onMinimizeClicked(MouseEvent event)
+    {
         ((Stage) (minimizeButton).getScene().getWindow()).setIconified(true);
     }
 
     @FXML
-    private void onToggleSwitch(MouseEvent event) {
+    private void onToggleSwitch(MouseEvent event)
+    {
         toggleSwitch();
     }
 
-    public static Controller getInstance() {
+    public static Controller getInstance()
+    {
         return thisController;
     }
 
-    public String getBufErrorMessage() {
+    public String getLogin()
+    {
+        if (loginField != null)
+        {
+            return loginField.getText();
+        } else
+        {
+            showErrorMessage("Oops! Login is null");
+            return null;
+        }
+    }
+
+    public String getPassword()
+    {
+        return passwordField.getText();
+    }
+
+    public String getBufErrorMessage()
+    {
         return bufErrorMessage;
     }
 
-    public void setBufErrorMessage(String buff) { bufErrorMessage = buff; }
+    public void setBufErrorMessage(String buff)
+    {
+        bufErrorMessage = buff;
+    }
 
-    public void showErrorMessage(String error) {
-        if (errorMessage != null) {
+    public void showErrorMessage(String error)
+    {
+        if (errorMessage != null)
+        {
             errorMessage.setText(error);
             errorMessage.setVisible(true);
         }
     }
 
-    public void showErrorMessage(String error, Paint paint) {
-        if (errorMessage != null) {
+    public void showErrorMessage(String error, Paint paint)
+    {
+        if (errorMessage != null)
+        {
             errorMessage.setFill(paint);
         }
         showErrorMessage(error);
     }
 
     //Modified source https://gist.github.com/jonyfs/b279b5e052c3b6893a092fed79aa7fbe#file-javafxtrayiconsample-java-L86
-    private void addAppToTray() {
-        try {
+    private void addAppToTray()
+    {
+        try
+        {
             // ensure awt toolkit is initialized.
             java.awt.Toolkit.getDefaultToolkit();
 
             // app requires system tray support, just exit if there is no support.
-            if (!java.awt.SystemTray.isSupported()) {
+            if (!java.awt.SystemTray.isSupported())
+            {
                 System.out.println("No system tray support, application exiting.");
                 closeApp();
             }
@@ -156,17 +186,21 @@ public class Controller {
 
             // toggle logging via tray, add item to popup menu, change it's displayed label
             java.awt.MenuItem toggleItem = new java.awt.MenuItem("Turn off");
-            toggleItem.addActionListener(event -> { toggleSwitch(); });
+            toggleItem.addActionListener(event ->
+            {
+                toggleSwitch();
+            });
 
             //Tray icon listener. Used to show tray label correctly - toggle off when switched on and vise versa
-            trayIcon.addMouseMotionListener(new MouseAdapter() {
+            trayIcon.addMouseMotionListener(new MouseAdapter()
+            {
                 @Override
-                public void mouseMoved(java.awt.event.MouseEvent e) {
+                public void mouseMoved(java.awt.event.MouseEvent e)
+                {
                     if (thController.getIsServerToggledOff())
                     {
                         toggleItem.setLabel("Turn on");
-                    }
-                    else
+                    } else
                     {
                         toggleItem.setLabel("Turn off");
                     }
@@ -183,7 +217,8 @@ public class Controller {
             // and select the exit option, this will shutdown JavaFX and remove the
             // tray icon (removing the tray icon will also shut down AWT).
             java.awt.MenuItem exitItem = new java.awt.MenuItem("Exit");
-            exitItem.addActionListener(event -> {
+            exitItem.addActionListener(event ->
+            {
                 tray.remove(trayIcon);
                 closeApp();
             });
@@ -198,91 +233,106 @@ public class Controller {
 
             // add the application tray icon to the system tray.
             tray.add(trayIcon);
-        } catch (AWTException | IOException e) {
+        } catch (AWTException | IOException e)
+        {
             System.out.println("Unable to init system tray");
             e.printStackTrace();
         }
     }
 
-    private void showStage() {
-        if (window != null) {
+    private void showStage()
+    {
+        if (window != null)
+        {
             window.show();
             window.toFront();
         }
     }
 
-    public void closeApp() {
-        try {
+    public void closeApp()
+    {
+        try
+        {
             thController.sendClose();
-        }catch (IOException e){
+        } catch (IOException e)
+        {
             showErrorMessage("Selector is null not initialized. And could not close connection correctly");
         }
+        Properties.serializeProperties();
         Platform.exit();
         System.exit(0);
     }
 
     //GUI changes when big orange button is pressed
-    public void onTurnedOn(){
+    public void onTurnedOn()
+    {
         statusText.setFill(Paint.valueOf("#9de05c"));
         statusText.setText("Turn off");
         toggleButton.setImage(new Image(stylePath + "turnOnButtonSmall.png"));
         DropShadow greenShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(157, 224, 92, 0.5), 10, 0, 0, 0);
         toggleButton.setEffect(greenShadow);
-        nameField.setDisable(true);
-        if (!portField.getText().equals("")) {
-            try {
-                port = Integer.parseInt(portField.getText());
-            } catch (NumberFormatException e) {
-                port = DEFAULTPORT;
-                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
-            }
-            if (port > 65535 || port <= 1024) {
-                port = DEFAULTPORT;
-                this.showErrorMessage(String.format("Must be: 1024 < Port <= 65535\nSet to default %d", DEFAULTPORT), Paint.valueOf("#9de05c"));
-            }
-        }
-        else{
-            port = DEFAULTPORT;
-        }
-        portField.setDisable(true);
+        loginField.setDisable(true);
+        passwordField.setDisable(true);
     }
 
     //GUI changes when big green button is pressed
-    public void onTurnedOff(){
+    public void onTurnedOff()
+    {
         statusText.setFill(Paint.valueOf("#f8902f"));
         statusText.setText("Turn on");
         toggleButton.setImage(new Image(stylePath + "turnOffButtonSmall.png"));
         DropShadow orangeShadow = new DropShadow(BlurType.THREE_PASS_BOX, Color.rgb(221, 157, 102, 0.5), 10, 0, 0, 0);
         toggleButton.setEffect(orangeShadow);
-        nameField.setDisable(false);
-        portField.setDisable(false);
+        loginField.setDisable(false);
+        passwordField.setDisable(false);
     }
 
-    private void toggleSwitch() {
-        if (thController.getIsServerToggledOff()) {
+    private void toggleSwitch()
+    {
+        if (thController.getIsServerToggledOff())
+        {
             onTurnedOn();
-            Thread.UncaughtExceptionHandler h = (th, ex) -> {
-                try {
+            Thread.UncaughtExceptionHandler h = (th, ex) ->
+            {
+                try
+                {
                     thController.sendClose();
                     showErrorMessage("Uncaught error");
-                }catch (IOException e){
+                } catch (IOException e)
+                {
                     showErrorMessage("Uncaught error\nClosing connection failed");
                 }
                 onTurnedOff();
             };
-            connectionAcceptTh = new Thread() {
+            connectionAcceptTh = new Thread()
+            {
                 @Override
-                public void run() {
-                    try{
+                public void run()
+                {
+                    int port;
+                    if (Properties.getInstance().isPortValid())
+                    {
+                        port = Properties.getInstance().getPort();
+                    }
+                    else
+                    {
+                        port = Properties.getDEFAULTPORT();
+                    }
+                    try
+                    {
                         thController.launchService(port);
-                    } catch (PrettyException e) {
+                    } catch (PrettyException e)
+                    {
                         showErrorMessage(e.getPrettyMessage());
-                        try {
+                        try
+                        {
                             thController.sendClose();
                             onTurnedOff();
-                        } catch (IOException exception) {
+                        } catch (IOException exception)
+                        {
                             showErrorMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
-                        } catch (Exception unusualException) {
+                        } catch (Exception unusualException)
+                        {
                             throw new RuntimeException();
                         }
                         //System.out.println(e.toString());
@@ -294,19 +344,23 @@ public class Controller {
             };
             connectionAcceptTh.setUncaughtExceptionHandler(h);
             connectionAcceptTh.start();
-        }
-        else {
+        } else
+        {
             onTurnedOff();
-            try {
+            try
+            {
                 thController.sendClose();
-            }catch (IOException e) {
+            } catch (IOException e)
+            {
                 showErrorMessage("Selector is invalid. And closing connection failed");
             }
         }
     }
 
-    public boolean isContain (MouseEvent mouseEvent, ImageView image) {
-        if (mouseEvent.getX() >= image.getBoundsInParent().getCenterX() - (image.getFitWidth() / 2) && mouseEvent.getX() <= image.getBoundsInParent().getCenterX() + (image.getFitWidth() / 2) && mouseEvent.getY() >= image.getBoundsInParent().getCenterY() - (image.getFitHeight() / 2) && mouseEvent.getY() <= image.getBoundsInParent().getCenterY() + (image.getFitHeight() / 2)) {
+    public boolean isContain(MouseEvent mouseEvent, ImageView image)
+    {
+        if (mouseEvent.getX() >= image.getBoundsInParent().getCenterX() - (image.getFitWidth() / 2) && mouseEvent.getX() <= image.getBoundsInParent().getCenterX() + (image.getFitWidth() / 2) && mouseEvent.getY() >= image.getBoundsInParent().getCenterY() - (image.getFitHeight() / 2) && mouseEvent.getY() <= image.getBoundsInParent().getCenterY() + (image.getFitHeight() / 2))
+        {
             return true;
         }
         return false;
@@ -314,35 +368,46 @@ public class Controller {
 
     public void initialize()
     {
-        titleBar.setOnMousePressed(new EventHandler<MouseEvent>() {
+        titleBar.setOnMousePressed(new EventHandler<MouseEvent>()
+        {
             @Override
-            public void handle(MouseEvent t) {
-                if (isContain(t, minimizeButton) || isContain(t, closeButton)) {
+            public void handle(MouseEvent t)
+            {
+                if (isContain(t, minimizeButton) || isContain(t, closeButton))
+                {
                     mouse.setX(-1);
                     mouse.setY(-1);
-                }
-                else {
+                } else
+                {
                     mouse.setX(t.getX());
                     mouse.setY(t.getY());
                 }
             }
         });
 
-        titleBar.setOnMouseDragged(new EventHandler<MouseEvent>() {
+        titleBar.setOnMouseDragged(new EventHandler<MouseEvent>()
+        {
             @Override
-            public void handle(MouseEvent t) {
-                if (mouse.getX() != -1) {
+            public void handle(MouseEvent t)
+            {
+                if (mouse.getX() != -1)
+                {
                     titleBar.getScene().getWindow().setX(t.getScreenX() - mouse.getX());
                     titleBar.getScene().getWindow().setY(t.getScreenY() - mouse.getY());
                 }
             }
         });
 
-        pane.setOnMousePressed(new EventHandler<MouseEvent>() {
+        pane.setOnMousePressed(new EventHandler<MouseEvent>()
+        {
             @Override
-            public void handle(MouseEvent t) {
+            public void handle(MouseEvent t)
+            {
                 errorMessage.setVisible(false);
             }
         });
+
+        Properties.deserializeProperties();
+        loginField.setText(Properties.getInstance().getLogin());
     }
 }

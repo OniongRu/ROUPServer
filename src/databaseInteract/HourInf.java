@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 
 
 //Only getters here because there is no point in changing pack info https://vk.com/sticker/1-163-64
-public class HourInf {
+public class HourInf
+{
     @Observable
     private LocalDateTime creationDate;
 
@@ -24,28 +25,39 @@ public class HourInf {
     @Observable
     private ResourceUsage resource;
 
-    public int getTimeSum() {
+    public int getTimeSum()
+    {
         return timeSum;
     }
 
-    public int getTimeActSum(){
+    public int getTimeActSum()
+    {
         return timeActSum;
     }
 
-    public void incrementTimeActSum(int collectInterval){ timeActSum += collectInterval; }
+    public void incrementTimeActSum(int collectInterval)
+    {
+        timeActSum += collectInterval;
+    }
 
-    public ResourceUsage getResource() {
+    public ResourceUsage getResource()
+    {
         return resource;
     }
 
-    public LocalDateTime getCreationDate() { return creationDate; }
+    public LocalDateTime getCreationDate()
+    {
+        return creationDate;
+    }
 
-    public int getDataPackCount(){
+    public int getDataPackCount()
+    {
         return dataPackCount;
     }
 
 
-    public void print(){
+    public void print()
+    {
         System.out.println("Date: " + creationDate);
         System.out.println("Datapack count: " + dataPackCount);
         System.out.println("Time sum: " + timeSum);
@@ -89,7 +101,7 @@ public class HourInf {
         this.resource = new ResourceUsage();
 
     }
-    
+
     public HourInf(LocalDateTime date)
     {
         this.creationDate = date;
@@ -99,13 +111,15 @@ public class HourInf {
         this.resource = new ResourceUsage();
     }
 
-    public void AddNewProgram(int collectInterval, ProgramClass programClass) {
+    public void AddNewProgram(int collectInterval, ProgramClass programClass)
+    {
         dataPackCount++;
         timeSum += collectInterval;
         resource.AddMoreInfoAbout(programClass.getThreadAmount(), programClass.getCpuUsage(), programClass.getRamUsage());
     }
 
-    public void mergeFinalizedHourInfo(HourInf hourInf) {
+    public void mergeFinalizedHourInfo(HourInf hourInf)
+    {
         int dataPackCountFromDB = hourInf.dataPackCount;
         this.timeSum += hourInf.timeSum;
         this.timeActSum += hourInf.timeActSum;
@@ -118,16 +132,19 @@ public class HourInf {
         finalizeObservations();
     }
 
-    public void finalizeObservations() {
+    public void finalizeObservations()
+    {
         this.resource.finalizeObservations(dataPackCount);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(Object o)
+    {
         if (o == this)
             return true;
 
-        if (!(o instanceof HourInf)) {
+        if (!(o instanceof HourInf))
+        {
             return false;
         }
 
@@ -139,27 +156,33 @@ public class HourInf {
         return false;
     }
 
-    public static HourInf aHourInf() {
+    public static HourInf aHourInf()
+    {
         return new HourInf();
     }
 
-    public void withCreationDate(LocalDateTime creationDate) {
+    public void withCreationDate(LocalDateTime creationDate)
+    {
         this.creationDate = creationDate;
     }
 
-    public void withDataPackCount(int dataPackCount) {
+    public void withDataPackCount(int dataPackCount)
+    {
         this.dataPackCount = dataPackCount;
     }
 
-    public void withTimeSum(int timeSum) {
+    public void withTimeSum(int timeSum)
+    {
         this.timeSum = timeSum;
     }
 
-    public void withActTimeSum(int timeActSum) {
+    public void withActTimeSum(int timeActSum)
+    {
         this.timeActSum = timeActSum;
     }
 
-    public void withResourceUsage(ResourceUsage resource) {
+    public void withResourceUsage(ResourceUsage resource)
+    {
         this.resource = resource;
     }
 }

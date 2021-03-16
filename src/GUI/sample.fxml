@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.geometry.Point3D?>
 <?import javafx.scene.Cursor?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.DropShadow?>
@@ -61,7 +62,7 @@
                      <children>
                         <VBox prefHeight="100.0" prefWidth="250.0">
                            <children>
-                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: #DEDEDE;" text="Name">
+                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: #DEDEDE;" text="Login">
                                  <font>
                                     <Font size="18.0" />
                                  </font>
@@ -69,7 +70,7 @@
                                     <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                  </VBox.margin>
                               </Text>
-                              <TextField fx:id="nameField" style="-fx-background-color: #585858; -fx-text-inner-color: #DEDEDE;">
+                              <TextField fx:id="loginField" style="-fx-background-color: #585858; -fx-text-inner-color: #DEDEDE;">
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="20.0" right="10.0" />
                                  </VBox.margin>
@@ -81,7 +82,7 @@
                         </VBox>
                         <VBox prefHeight="100.0" prefWidth="250.0">
                            <children>
-                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: DEDEDE;" text="Port">
+                              <Text fill="#f8f8f8" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: DEDEDE;" text="Password">
                                  <font>
                                     <Font size="18.0" />
                                  </font>
@@ -89,14 +90,14 @@
                                     <Insets bottom="10.0" left="20.0" right="10.0" top="10.0" />
                                  </VBox.margin>
                               </Text>
-                              <TextField fx:id="portField" style="-fx-background-color: #585858; -fx-text-inner-color: #DEDEDE;">
+                              <PasswordField fx:id="passwordField" style="-fx-background-color: #585858;">
+                                 <effect>
+                                    <DropShadow offsetY="1.0" />
+                                 </effect>
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="20.0" right="10.0" />
                                  </VBox.margin>
-                                 <effect>
-                                    <DropShadow />
-                                 </effect>
-                              </TextField>
+                              </PasswordField>
                            </children>
                         </VBox>
                      </children>
