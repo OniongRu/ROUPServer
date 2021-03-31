@@ -195,7 +195,8 @@ public class ThreadController {
     }
 
     //Method that is to be called to stop service
-    public void sendClose() throws IOException {
+    public void sendClose() throws IOException
+    {
         setIsServerToggledOff(true);
         if (sSelector != null)
             sSelector.wakeup();
