@@ -5,16 +5,11 @@ import GUI.Controller;
 import GUI.Properties;
 import com.google.gson.*;
 import databaseInteract.User;
-import javafx.scene.control.PasswordField;
 
-import javax.naming.ldap.Control;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -65,7 +60,7 @@ public class ParseJSON
             return gson.fromJson(query, ObserverData.class);
         } catch (JsonSyntaxException e)
         {
-            Controller.getInstance().showErrorMessage("Received incorrect request from observer");
+            Controller.getInstance().showStatusMessage("Received incorrect request from observer");
             return null;
         }
     }
@@ -94,7 +89,7 @@ public class ParseJSON
         return gson.fromJson(gsonClient, DataPack.class);
     }
 
-    public static boolean RegisterClSender(String gsonClient)
+    public static boolean RegisterClSender(String gsonClient) throws Exception
     {
         gsonClient = gsonClient.substring(23);
         String[] loginPasswordStringArray = gsonClient.split("\n");
@@ -102,7 +97,9 @@ public class ParseJSON
         {
             return false;
         }
+
         DBManager manager = new DBManager();
+
         try
         {
             //TODO - change condition on release
@@ -113,7 +110,7 @@ public class ParseJSON
             }
         } catch (SQLException e)
         {
-            Controller.getInstance().showErrorMessage("isUserExists() failed");
+            Controller.getInstance().showStatusMessage("Checking if user exists failed");
             return false;
         }
         return false;
@@ -133,7 +130,7 @@ public class ParseJSON
             st.executeUpdate("UPDATE users SET privilege = 1 WHERE user_name = \"\";");
         } catch (Exception e)
         {
-            Controller.getInstance().showErrorMessage("Can't connect to database");
+            Controller.getInstance().showStatusMessage("Can't connect to database");
         }
         return true;
     }

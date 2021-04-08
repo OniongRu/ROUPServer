@@ -132,12 +132,12 @@
                               <DropShadow color="#dd9d6680" />
                            </effect>
                         </ImageView>
-                        <Text fx:id="errorMessage" fill="#ff902f" strokeType="OUTSIDE" strokeWidth="0.0" text="No internet connection" visible="false">
+                        <Text fx:id="statusMessage" fill="#ff902f" strokeType="OUTSIDE" strokeWidth="0.0" text="No internet connection" visible="false" wrappingWidth="102.24609375">
                            <font>
                               <Font size="10.0" />
                            </font>
                            <VBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="10.0" />
                            </VBox.margin>
                         </Text>
                      </children>

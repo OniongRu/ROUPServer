@@ -69,7 +69,7 @@ public class Properties
             propertiesFWriter = new FileWriter(propertiesPath);
         } catch (IOException e)
         {
-            Controller.getInstance().showErrorMessage("Could find path to update\nproperties file file");
+            Controller.getInstance().showStatusMessage("Could find path to update\nproperties file file");
             return;
         }
         try
@@ -78,7 +78,7 @@ public class Properties
             propertiesFWriter.close();
         } catch (IOException e)
         {
-            Controller.getInstance().showErrorMessage("Could not update\nproperties file");
+            Controller.getInstance().showStatusMessage("Could not update\nproperties file");
             return;
         }
     }
@@ -92,7 +92,7 @@ public class Properties
             configFileReader = new FileReader(propertiesPath);
         } catch (FileNotFoundException e)
         {
-            Controller.getInstance().showErrorMessage("Config file not found\nUsing default parameters");
+            Controller.getInstance().showStatusMessage("Config file not found\nUsing default parameters");
             return;
         }
         Gson gson = new Gson();
@@ -102,7 +102,7 @@ public class Properties
             configFileReader.close();
         } catch (JsonSyntaxException | JsonIOException | IOException e)
         {
-            Controller.getInstance().showErrorMessage("Could not read config file\nUsing default parameters");
+            Controller.getInstance().showStatusMessage("Could not read config file\nUsing default parameters");
             return;
         }
     }

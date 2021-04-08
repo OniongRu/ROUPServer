@@ -1,1 +1,1 @@
-select * from test.program
+select users.user_name, program.program_name from test.program CROSS JOIN test.users

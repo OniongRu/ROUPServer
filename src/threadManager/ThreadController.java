@@ -5,7 +5,6 @@ import GUI.Controller;
 import GUI.PrettyException;
 import dataRecieve.ClientGroup;
 import dataRecieve.DataPack;
-import dataRecieve.ParseJSON;
 import databaseInteract.DataPackToUser;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
@@ -25,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
-import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class ThreadController {
@@ -77,14 +75,27 @@ public class ThreadController {
     }
 
     //Method schedules periodic converting and writing to database received DataPacks
-    public void writeUsersToDB() {
-        final Runnable databaseWriter = new Runnable() {
-            public void run() {
+    public void writeUsersToDBPeriodically()
+    {
+        final Runnable databaseWriter = new Runnable()
+        {
+            public void run()
+            {
                 DataPackToUser converter = new DataPackToUser(dataPackQueue, new HashMap<String, User>());
                 converter.TransformPacks();
 
                 Map<String, User> users = converter.getUsers();
-                DBManager manager = new DBManager();
+                DBManager manager = null;
+                try
+                {
+                    manager = new DBManager();
+                }
+                catch(Exception e)
+                {
+                    closeService();
+                    writerHandle.cancel(true);
+                    return;
+                }
 
                 //Writing info from client sender to database
                 for (User user : users.values()) {
@@ -92,7 +103,7 @@ public class ThreadController {
                     user.print();
                     try {
                         if (!manager.isUserValid(user)) {
-                            Controller.getInstance().showErrorMessage("User " + user.getName() + "is not stored in DB\nRelevant info ignored");
+                            Controller.getInstance().showStatusMessage("User " + user.getName() + "is not stored in DB\nRelevant info ignored");
                         } else {
                             for (ProgramTracker program : user.getPrograms()) {
                                 manager.addProgram(program, user.getName());
@@ -103,7 +114,8 @@ public class ThreadController {
                         }
 
                     } catch (SQLException e) {
-                        Controller.getInstance().showErrorMessage("Writing to DB failed");
+                        writerHandle.cancel(true);
+                        return;
                     }
                 }
             }
@@ -114,9 +126,9 @@ public class ThreadController {
 
     public void launchService(final int PORT) throws PrettyException, RuntimeException {
         //TODO - delete on release
-        DBManager manager = new DBManager();
+        /*DBManager manager = new DBManager();
         String clientData = "Register client sender\n\nnYTQ4q/9v8UcKK64U2cz9g==";
-        ParseJSON.RegisterClSender(clientData, 1);
+        ParseJSON.RegisterClSender(clientData, 1);*/
         //TODO - delete on release
 
         isServerToggledOff = false;
@@ -131,7 +143,7 @@ public class ThreadController {
         }catch(IOException e){
             throw new PrettyException(e, "Fail opening connection. Try changing port");
         }
-        writeUsersToDB();
+        writeUsersToDBPeriodically();
         while(true) {
             try {
                 sSelector.select();
@@ -139,15 +151,13 @@ public class ThreadController {
                 throw (new PrettyException(e, "Error managing clients (Selector.select)"));
             }
             Set<SelectionKey> selectedKeys = sSelector.selectedKeys();
-            if (isServerToggledOff){
-                if (writerHandle != null) {
-                    scheduler.execute(() -> writerHandle.cancel(false));
+            if (isServerToggledOff)
+            {
+                if (writerHandle != null)
+                {
+                    writerHandle.cancel(false);
                 }
-                try {
-                    closeService();
-                }catch (IOException e){
-                    throw(new PrettyException(e, "Closing server's connection failed"));
-                }
+                closeService();
                 return;
             }
 
@@ -171,7 +181,8 @@ public class ThreadController {
         }
     }
 
-    public void closeService() throws IOException {
+    public void closeService()
+    {
         isServerToggledOff = true;
         //For some reason i can't close connection from other thread. They say it's an OS-dependant thing
         //That's why i haven't placed this in sendClose() as it is meant to be called from other thread
@@ -185,12 +196,26 @@ public class ThreadController {
             serverList = null;
         }
 
-        if (sChannel != null)
-            sChannel.close();
+        try
+        {
+            if (sChannel != null)
+                sChannel.close();
+        }
+        catch(IOException e)
+        {
+            Controller.getInstance().showStatusMessage("Exception closing sChannel");
+        }
         sChannel = null;
 
-        if (sSelector != null)
-            sSelector.close();
+        try
+        {
+            if (sSelector != null)
+                sSelector.close();
+        }
+        catch(IOException e)
+        {
+            Controller.getInstance().showStatusMessage("Exception closing sSelector");
+        }
         sSelector = null;
     }
 

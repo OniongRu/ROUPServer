@@ -1,41 +1,37 @@
 package DBManager;
 
 import GUI.Controller;
-import com.mysql.cj.xdevapi.SqlMultiResult;
-import com.mysql.cj.xdevapi.SqlResult;
 import databaseInteract.HourInf;
 import databaseInteract.ProgramTracker;
 import databaseInteract.ResourceUsage;
 import databaseInteract.User;
-import javafx.scene.control.Control;
 import javafx.scene.paint.Paint;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class DBManager
 {
 
     private Connection conn;
 
-    public DBManager()
+    public DBManager() throws SQLException, IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException
     {
-        try
-        {
+        //try
+        //{
             Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             conn = getConnection();
-        } catch (Exception ex)
+        /*} catch (Exception ex)
         {
-            System.out.println("Connection failed...");
-            System.out.println(ex);
-        }
+            Controller.getInstance().showErrorMessage("Connection to database failed!");
+            Controller.getInstance().onTurnedOff();
+            //System.out.println("Connection failed...");
+            //System.out.println(ex);
+        }*/
     }
 
     public void addUser(User user) throws SQLException
@@ -77,14 +73,13 @@ public class DBManager
             isProgramInDB = isProgramExists(user_name, program.getName());
         } catch (SQLException e)
         {
-            Controller.getInstance().showErrorMessage("Fatal: malformed database\nor unqualified developer", Paint.valueOf("#910415"));
+            Controller.getInstance().showStatusMessage("Fatal: malformed database\nor unqualified developer", Paint.valueOf("#910415"));
             return;
         }
         if (!isProgramInDB)
         {
             Statement statement = conn.createStatement();
             String query = String.format(
-                    //TODO Correct multiple programs for one user
                     "INSERT INTO program (program_name, user_id) " +
                             "VALUES ('%s', (SELECT user_id FROM users WHERE user_name='%s'))",
                     program.getName(), user_name);
@@ -95,7 +90,6 @@ public class DBManager
 
     public void addHourInf(HourInf hourInf, String programName, String userName) throws SQLException
     {
-        //TODO check update hour info after all shit mistake
         HourInf hourInfFromDB = getHourInf(programName, userName, hourInf.getCreationDate());
         hourInf.mergeFinalizedHourInfo(hourInfFromDB);
 
@@ -109,11 +103,10 @@ public class DBManager
             deleteStatement.executeUpdate();
         } catch (SQLException e)
         {
-            Controller.getInstance().showErrorMessage("Replacing HourInfo failed\nCould not delete old information");
+            Controller.getInstance().showStatusMessage("Replacing HourInfo failed\nCould not delete old information");
             return;
         }
 
-        //TODO fails when different users have same program names
         String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate) " +
                 "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=? " +
                 "AND user_id=(SELECT user_id FROM users WHERE user_name=?)), ?, ?, ?, ?, ?)";
@@ -133,7 +126,7 @@ public class DBManager
             System.out.printf("Added %d rows at table resourceUsage\n", rows);
         } catch (SQLException e)
         {
-            Controller.getInstance().showErrorMessage("Couldn't add hourly information");
+            Controller.getInstance().showStatusMessage("Couldn't add hourly information");
             System.out.println("GOOSE!");
         }
     }

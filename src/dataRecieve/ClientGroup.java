@@ -4,7 +4,6 @@ import DBManager.DBManager;
 import GUI.Controller;
 import GUI.PrettyException;
 import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
 import dataSend.DataObservableExposeStrategy;
 import dataSend.UserDataWrapper;
 import dataSend.UserProgramNamesWrapper;
@@ -85,6 +84,7 @@ public class ClientGroup extends Thread
 
     public void run()
     {
+        int internalErrorsCounter = 0;
         try
         {
             isCloseSent = false;
@@ -118,7 +118,11 @@ public class ClientGroup extends Thread
                     SelectionKey key = iter.next();
                     if (key.isReadable())
                     {
-                        takeGson(key);
+                        if (!takeJson(key))
+                        {
+                            internalErrorsCounter++;
+                            //TODO - react somehow on internal server errors
+                        }
                     }
                     iter.remove();
                 }
@@ -170,10 +174,12 @@ public class ClientGroup extends Thread
     //In this application there is an agreement "EndThisConnection" in a beginning means stop signal
     //Beginning "Client data\n" means that server is about to receive DataPack
     //Beginning "Request\n" means that server is about to receive a query for an administrator's client
-    private void takeGson(SelectionKey key)
+    //Return value shows if exceptions occurred due to server or it's environment errors (value = false)
+    //Or program worked correctly / received message is corrupted (value = true)
+    private boolean takeJson(SelectionKey key)
     {
         SocketChannel client = (SocketChannel) key.channel();
-        ByteBuffer requestBuffer = ByteBuffer.allocate(1024 * 10);
+        ByteBuffer requestBuffer = ByteBuffer.allocate(264000);
         requestBuffer.clear();
         try
         {
@@ -193,19 +199,32 @@ public class ClientGroup extends Thread
 
         String clientData = new String(requestBuffer.array()).trim();
         requestBuffer.clear();
-        //clientData = "NeedJson\n {\"name\": \"\", \"password\": \"nYTQ4q/9v8UcKK64U2cz9g==\", \"users\": [\"Goose\"], \"programs\":[\"sihost.exe\", \"svchost.exe\", \"idea64.exe\"], \"from\": \"00:00:00, 01.01.2000\", \"to\": \"00:00:00, 01.01.2050\"}";
+
+        //TODO - delete after debug
+        /*System.out.println(clientData);
+        System.out.println(clientData.length());
+        return true;*/
 
         ByteBuffer respondBuffer = ByteBuffer.allocate(1024 * 10);
 
         if (clientData.equals("EndThisConnection"))
-        {//TODO Add types of getting data
+        {
             decrementCnt();
             ParseJSON.EndConnection(key);
         } else if (clientData.startsWith("Client data\n"))
         {
             System.out.println(clientData);
             DataPack dataPackFromUser = ParseJSON.ClSenderData(clientData);
-            DBManager manager = new DBManager();
+            DBManager manager = null;
+            try
+            {
+                manager = new DBManager();
+            }
+            catch(Exception e)
+            {
+                Controller.getInstance().showStatusMessage("DB connection failed. Data ignored");
+                return false;
+            }
             try
             {
                 if (manager.isUserValid(dataPackFromUser.getUserName(), dataPackFromUser.getPassword()))
@@ -214,58 +233,72 @@ public class ClientGroup extends Thread
                     respondBuffer.put("Data is being processed".getBytes(StandardCharsets.UTF_8));
                 } else
                 {
+                    //Login and/or password incorrect. No exceptions thrown.
                     respondBuffer.put("Data is ignored".getBytes(StandardCharsets.UTF_8));
                 }
             } catch (SQLException e)
             {
-                respondBuffer.put("Data is ignored".getBytes(StandardCharsets.UTF_8));
-                Controller.getInstance().showErrorMessage("Could not check if user exists in database");
-            } finally
+                Controller.getInstance().showStatusMessage("Could not check if user exists in database");
+                return false;
+            }
+            respondBuffer.flip();
+            try
             {
-                respondBuffer.flip();
-                try
-                {
-                    client.write(respondBuffer);
-                } catch (IOException e)
-                {
-                    Controller.getInstance().showErrorMessage("Could not send respond client\ndata status");
-                }
+                client.write(respondBuffer);
+            }
+            catch (IOException e)
+            {
+                Controller.getInstance().showStatusMessage("Could not send respond client's data status");
+                return false;
             }
         } else if (clientData.startsWith("NeedJson\n"))
         {
             ObserverData observer = ParseJSON.HandleRequest(clientData);
-            //TODO handle requests
             if (observer == null)
             {
+                //Received message is incorrect
                 sendErrorRespond(client);
-                return;
+                return true;
             }
 
-            DBManager manager = new DBManager();
-            int privilege = 0;
+            DBManager manager = null;
             try
             {
-                privilege = manager.getPrivilege(observer.getName());
-            } catch (SQLException e)
-            {
-                Controller.getInstance().showErrorMessage("Could not get user's privilege");
-                sendErrorRespond(client);
-                return;
+                manager = new DBManager();
             }
-            if (privilege != 1)
+            catch(Exception e)
             {
+                Controller.getInstance().showStatusMessage("DB connection failed. Register failed.");
                 sendErrorRespond(client);
-                return;
+                return false;
             }
+
             int isObserverValid = 0;
             try
             {
                 isObserverValid = manager.isUserValid(observer.getName(), observer.getPassword()) ? 1 : 0;
             } catch (SQLException e)
             {
-                Controller.getInstance().showErrorMessage("Could not verify observer's \nname and password");
+                Controller.getInstance().showStatusMessage("Could not verify observer's \nname and password");
                 sendErrorRespond(client);
-                return;
+                return false;
+            }
+
+            int privilege = 0;
+            try
+            {
+                privilege = manager.getPrivilege(observer.getName());
+            } catch (SQLException e)
+            {
+                Controller.getInstance().showStatusMessage("Could not get user's privilege");
+                sendErrorRespond(client);
+                return false;
+            }
+            if (privilege != 1)
+            {
+                //User with wrong privilege requested data
+                sendErrorRespond(client);
+                return true;
             }
 
             ArrayList<User> usersList = new ArrayList<>();
@@ -276,7 +309,8 @@ public class ClientGroup extends Thread
                     usersList.add(manager.getUserWithPrograms(userName, observer.getPrograms(), observer.getFrom(), observer.getTo()));
                 } catch (SQLException e)
                 {
-                    Controller.getInstance().showErrorMessage("Could not get info requested by observer");
+                    Controller.getInstance().showStatusMessage("Could not get info requested by observer");
+                    return false;
                 }
             }
 
@@ -300,25 +334,37 @@ public class ClientGroup extends Thread
                 client.write(respondBuffer);
             } catch (IOException e)
             {
-                Controller.getInstance().showErrorMessage("Could not send respond observer\n");
+                Controller.getInstance().showStatusMessage("Could not send respond observer\n");
+                return false;
             }
         } else if (clientData.startsWith("Register client sender\n"))
         {
             //Respond register status
-            if (ParseJSON.RegisterClSender(clientData))
+            try
             {
-                respondBuffer.put("Register successful".getBytes(StandardCharsets.UTF_8));
-            } else
-            {
-                respondBuffer.put("Register failed".getBytes(StandardCharsets.UTF_8));
+                if (ParseJSON.RegisterClSender(clientData))
+                {
+                    respondBuffer.put("Register successful".getBytes(StandardCharsets.UTF_8));
+                } else
+                {
+                    //Login and/or password incorrect
+                    respondBuffer.put("Register failed".getBytes(StandardCharsets.UTF_8));
+                }
             }
+            catch(Exception e)
+            {
+                Controller.getInstance().showStatusMessage("DB connection failed. Register failed.");
+                return false;
+            }
+
             respondBuffer.flip();
             try
             {
                 client.write(respondBuffer);
             } catch (IOException e)
             {
-                Controller.getInstance().showErrorMessage("Could not send respond client\nregister status");
+                Controller.getInstance().showStatusMessage("Couldn't confirm registration");
+                return false;
             }
         } else if (clientData.startsWith("Initialize observer\n"))
         {
@@ -350,21 +396,32 @@ public class ClientGroup extends Thread
                 LPWrapper = gson.fromJson(clientData, LoginPasswordWrapper.class);
             } catch (JsonSyntaxException e)
             {
-                Controller.getInstance().showErrorMessage("Error parsing JSon from observer");
+                //Received message is incorrect
+                Controller.getInstance().showStatusMessage("Error parsing JSon from observer");
                 sendErrorRespond(client);
-                return;
+                return true;
             }
 
-            DBManager manager = new DBManager();
+            DBManager manager = null;
+            try
+            {
+                manager = new DBManager();
+            }
+            catch(Exception e)
+            {
+                Controller.getInstance().showStatusMessage("DB connection failed. Register observer failed.");
+                return false;
+            }
+
             boolean isObserverValid = false;
             try
             {
                 isObserverValid = manager.isUserValid(LPWrapper.getName(), LPWrapper.getPassword()) && manager.getPrivilege(LPWrapper.getName()) == 1;
             } catch (SQLException e)
             {
-                Controller.getInstance().showErrorMessage("Could not verify observer");
+                Controller.getInstance().showStatusMessage("Could not verify observer");
                 sendErrorRespond(client);
-                return;
+                return false;
             }
 
             String respond;
@@ -378,9 +435,9 @@ public class ClientGroup extends Thread
                     respond = gson.toJson(new UserProgramNamesWrapper(0, 1, manager.getAllUserNames(), manager.getAllProgramNames()));
                 } catch (SQLException e)
                 {
-                    Controller.getInstance().showErrorMessage("Error getting users or programs by observer's request");
+                    Controller.getInstance().showStatusMessage("Error getting users or programs by observer's request");
                     sendErrorRespond(client);
-                    return;
+                    return false;
                 }
             }
             respondBuffer.put(respond.getBytes(StandardCharsets.UTF_8));
@@ -390,11 +447,12 @@ public class ClientGroup extends Thread
                 client.write(respondBuffer);
             } catch (IOException e)
             {
-                Controller.getInstance().showErrorMessage("Could not send respond to server");
+                Controller.getInstance().showStatusMessage("Could not send respond to server");
                 sendErrorRespond(client);
-                return;
+                return false;
             }
         }
+        return true;
     }
 
     public void sendErrorRespond(SocketChannel client)
@@ -407,7 +465,7 @@ public class ClientGroup extends Thread
             client.write(respondBuffer);
         } catch (IOException e)
         {
-            Controller.getInstance().showErrorMessage("Could not send respond observer\nregister status");
+            Controller.getInstance().showStatusMessage("Could not send error respond");
         }
     }
 }

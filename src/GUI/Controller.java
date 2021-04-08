@@ -1,7 +1,7 @@
 package GUI;
 
+import DBManager.DBManager;
 import javafx.application.Platform;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -22,7 +22,12 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Controller
 {
@@ -51,7 +56,7 @@ public class Controller
     private ImageView toggleButton;
 
     @FXML
-    private Text errorMessage = new Text();
+    private Text statusMessage = new Text();
 
     private Stage window;
 
@@ -69,10 +74,24 @@ public class Controller
 
     private static Controller thisController = null;
 
+    private ReentrantLock errorLogLock = new ReentrantLock();
+
     public Controller()
     {
         thController = new ThreadController();
         thisController = this;
+
+        try
+        {
+            FileOutputStream outputStream = new FileOutputStream("serverLog.txt", false);
+            outputStream.write("".getBytes(StandardCharsets.UTF_8));
+            outputStream.close();
+        }
+        catch (IOException e)
+        {
+            statusMessage.setText("Can't write to log file.");
+            statusMessage.setVisible(true);
+        }
     }
 
     @FXML
@@ -117,7 +136,7 @@ public class Controller
             return loginField.getText();
         } else
         {
-            showErrorMessage("Oops! Login is null");
+            showStatusMessage("Oops! Login is null");
             return null;
         }
     }
@@ -137,22 +156,35 @@ public class Controller
         bufErrorMessage = buff;
     }
 
-    public void showErrorMessage(String error)
+    public void showStatusMessage(String error)
     {
-        if (errorMessage != null)
+        if (statusMessage != null)
         {
-            errorMessage.setText(error);
-            errorMessage.setVisible(true);
+            statusMessage.setText(error);
+            statusMessage.setVisible(true);
         }
+        errorLogLock.lock();
+        try
+        {
+            FileOutputStream outputStream = new FileOutputStream("serverLog.txt", true);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd',' HH:mm:ss ");
+            String singleRecord = LocalDateTime.now().format(formatter) + "\t" + error + "\n";
+            outputStream.write(singleRecord.getBytes(StandardCharsets.UTF_8));
+            outputStream.close();
+        }
+        catch(IOException e)
+        {
+        }
+        errorLogLock.unlock();
     }
 
-    public void showErrorMessage(String error, Paint paint)
+    public void showStatusMessage(String error, Paint paint)
     {
-        if (errorMessage != null)
+        if (statusMessage != null)
         {
-            errorMessage.setFill(paint);
+            statusMessage.setFill(paint);
         }
-        showErrorMessage(error);
+        showStatusMessage(error);
     }
 
     //Modified source https://gist.github.com/jonyfs/b279b5e052c3b6893a092fed79aa7fbe#file-javafxtrayiconsample-java-L86
@@ -256,7 +288,7 @@ public class Controller
             thController.sendClose();
         } catch (IOException e)
         {
-            showErrorMessage("Selector is null not initialized. And could not close connection correctly");
+            showStatusMessage("Selector is null not initialized. And could not close connection correctly");
         }
         Properties.serializeProperties();
         Platform.exit();
@@ -291,16 +323,25 @@ public class Controller
     {
         if (thController.getIsServerToggledOff())
         {
+            try
+            {
+                DBManager manager = new DBManager();
+            }
+            catch (Exception e)
+            {
+                Controller.getInstance().showStatusMessage("Test connection to DB failed.");
+                return;
+            }
             onTurnedOn();
             Thread.UncaughtExceptionHandler h = (th, ex) ->
             {
                 try
                 {
                     thController.sendClose();
-                    showErrorMessage("Uncaught error");
+                    showStatusMessage("Uncaught error");
                 } catch (IOException e)
                 {
-                    showErrorMessage("Uncaught error\nClosing connection failed");
+                    showStatusMessage("Uncaught error\nClosing connection failed");
                 }
                 onTurnedOff();
             };
@@ -323,14 +364,14 @@ public class Controller
                         thController.launchService(port);
                     } catch (PrettyException e)
                     {
-                        showErrorMessage(e.getPrettyMessage());
+                        showStatusMessage(e.getPrettyMessage());
                         try
                         {
                             thController.sendClose();
                             onTurnedOff();
                         } catch (IOException exception)
                         {
-                            showErrorMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
+                            showStatusMessage(e.getPrettyMessage() + "\n" + "Also closing connection failed");
                         } catch (Exception unusualException)
                         {
                             throw new RuntimeException();
@@ -352,7 +393,7 @@ public class Controller
                 thController.sendClose();
             } catch (IOException e)
             {
-                showErrorMessage("Selector is invalid. And closing connection failed");
+                showStatusMessage("Selector is invalid. And closing connection failed");
             }
         }
     }
@@ -403,7 +444,7 @@ public class Controller
             @Override
             public void handle(MouseEvent t)
             {
-                errorMessage.setVisible(false);
+                statusMessage.setVisible(false);
             }
         });
 

@@ -14,8 +14,6 @@ import static org.junit.Assert.*;
 
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public class DataPackToUserTest
 {
     ArrayList<ProgramClass> programList = new ArrayList<>();
