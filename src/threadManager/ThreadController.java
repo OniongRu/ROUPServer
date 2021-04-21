@@ -94,6 +94,7 @@ public class ThreadController {
                 {
                     closeService();
                     writerHandle.cancel(true);
+                    Controller.getInstance().showStatusMessage("Error writing to database!");
                     return;
                 }
 
@@ -115,6 +116,7 @@ public class ThreadController {
 
                     } catch (SQLException e) {
                         writerHandle.cancel(true);
+                        Controller.getInstance().showStatusMessage("Error writing to database!");
                         return;
                     }
                 }

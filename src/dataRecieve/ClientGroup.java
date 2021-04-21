@@ -179,7 +179,7 @@ public class ClientGroup extends Thread
     private boolean takeJson(SelectionKey key)
     {
         SocketChannel client = (SocketChannel) key.channel();
-        ByteBuffer requestBuffer = ByteBuffer.allocate(264000);
+        ByteBuffer requestBuffer = ByteBuffer.allocate(400000);
         requestBuffer.clear();
         try
         {
@@ -285,15 +285,17 @@ public class ClientGroup extends Thread
             }
 
             int privilege = 0;
-            try
+            //TODO - get privilege in group
+            /*try
             {
+
                 privilege = manager.getPrivilege(observer.getName());
             } catch (SQLException e)
             {
                 Controller.getInstance().showStatusMessage("Could not get user's privilege");
                 sendErrorRespond(client);
                 return false;
-            }
+            }*/
             if (privilege != 1)
             {
                 //User with wrong privilege requested data
@@ -416,7 +418,8 @@ public class ClientGroup extends Thread
             boolean isObserverValid = false;
             try
             {
-                isObserverValid = manager.isUserValid(LPWrapper.getName(), LPWrapper.getPassword()) && manager.getPrivilege(LPWrapper.getName()) == 1;
+                //TODO - get privilege the other way
+                isObserverValid = manager.isUserValid(LPWrapper.getName(), LPWrapper.getPassword()); //&& manager.getPrivilege(LPWrapper.getName()) == 1;
             } catch (SQLException e)
             {
                 Controller.getInstance().showStatusMessage("Could not verify observer");

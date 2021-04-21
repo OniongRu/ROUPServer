@@ -16,7 +16,6 @@ import java.util.*;
 
 public class DBManager
 {
-
     private Connection conn;
 
     public DBManager() throws SQLException, IOException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException
@@ -36,11 +35,10 @@ public class DBManager
 
     public void addUser(User user) throws SQLException
     {
-        String query = "INSERT INTO users(user_name, password, privilege) VALUES (?, ?, ?)";
+        String query = "INSERT INTO users(user_name, password) VALUES (?, ?)";
         PreparedStatement statement = conn.prepareStatement(query);
         statement.setString(1, user.getName());
         statement.setBytes(2, user.getPassword());
-        statement.setInt(3, 0);
 
         int rows = statement.executeUpdate();
         System.out.printf("Added %d rows at table users\n", rows);
@@ -73,7 +71,7 @@ public class DBManager
             isProgramInDB = isProgramExists(user_name, program.getName());
         } catch (SQLException e)
         {
-            Controller.getInstance().showStatusMessage("Fatal: malformed database\nor unqualified developer", Paint.valueOf("#910415"));
+            Controller.getInstance().showStatusMessage("Fatal: malformed database. Or unqualified developer", Paint.valueOf("#910415"));
             return;
         }
         if (!isProgramInDB)
@@ -90,10 +88,11 @@ public class DBManager
 
     public void addHourInf(HourInf hourInf, String programName, String userName) throws SQLException
     {
+        //TODO - change query
         HourInf hourInfFromDB = getHourInf(programName, userName, hourInf.getCreationDate());
         hourInf.mergeFinalizedHourInfo(hourInfFromDB);
 
-        String deleteQuery = "DELETE FROM hourinfo WHERE creationDate=\"" + Timestamp.valueOf(hourInf.getCreationDate())
+        String deleteQuery = "DELETE FROM hourinfo WHERE creation_date=\"" + Timestamp.valueOf(hourInf.getCreationDate())
                 + "\" AND program_id = (SELECT program_id FROM program WHERE program_name=\"" + programName +
                 "\" AND user_id=(SELECT user_id FROM users WHERE user_name=\"" + userName + "\"))";
 
@@ -107,7 +106,7 @@ public class DBManager
             return;
         }
 
-        String sql = "INSERT INTO hourinfo (cpuUsage, ramUsage, program_id, thread_amount, timeActSum, timeSum, dataPackCount, creationDate) " +
+        String sql = "INSERT INTO hourinfo (cpu_usage, ram_usage, program_id, thread_amount, time_act_sum, time_sum, data_pack_count, creation_date) " +
                 "VALUES (?, ?, (SELECT program_id FROM program WHERE program_name=? " +
                 "AND user_id=(SELECT user_id FROM users WHERE user_name=?)), ?, ?, ?, ?, ?)";
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql))
@@ -127,7 +126,6 @@ public class DBManager
         } catch (SQLException e)
         {
             Controller.getInstance().showStatusMessage("Couldn't add hourly information");
-            System.out.println("GOOSE!");
         }
     }
 
@@ -135,7 +133,7 @@ public class DBManager
     {
         HourInf hourInfo;
         Statement statement = conn.createStatement();
-        String sql = "SELECT * FROM hourinfo WHERE creationDate=\"" + Timestamp.valueOf(Date) +
+        String sql = "SELECT * FROM hourinfo WHERE creation_date=\"" + Timestamp.valueOf(Date) +
                 "\" AND program_id = (SELECT program_id FROM program WHERE program_name=\"" + programName +
                 "\" AND user_id=(SELECT user_id FROM users WHERE user_name=\"" + userName + "\"))";
         ResultSet resultSet = statement.executeQuery(sql);
@@ -349,44 +347,6 @@ public class DBManager
             throw new SQLException();
         }
         return user;
-    }
-
-    public int getPrivilege(String userName) throws SQLException
-    {
-        Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT privilege FROM users WHERE user_name = \"" + userName + "\"");
-        int privilege = 0;
-        if (resultSet.next())
-        {
-            privilege = resultSet.getInt(1);
-        } else
-        {
-            return -1;
-        }
-        if (resultSet.next())
-        {
-            throw new SQLException();
-        }
-        return privilege;
-    }
-
-    public int getPrivilege(int ID) throws SQLException
-    {
-        Statement statement = conn.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT privilege FROM users WHERE user_id = " + ID);
-        int privilege;
-        if (resultSet.next())
-        {
-            privilege = resultSet.getInt(1);
-        } else
-        {
-            throw new SQLException();
-        }
-        if (resultSet.next())
-        {
-            throw new SQLException();
-        }
-        return privilege;
     }
 
     private Connection getConnection() throws SQLException, IOException

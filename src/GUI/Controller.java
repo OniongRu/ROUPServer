@@ -66,8 +66,6 @@ public class Controller
 
     private static final String stylePath = "GUI/style/";
 
-    private String bufErrorMessage = null;
-
     ThreadController thController = null;
 
     Thread connectionAcceptTh = new Thread();
@@ -146,23 +144,9 @@ public class Controller
         return passwordField.getText();
     }
 
-    public String getBufErrorMessage()
-    {
-        return bufErrorMessage;
-    }
-
-    public void setBufErrorMessage(String buff)
-    {
-        bufErrorMessage = buff;
-    }
-
     public void showStatusMessage(String error)
     {
-        if (statusMessage != null)
-        {
-            statusMessage.setText(error);
-            statusMessage.setVisible(true);
-        }
+        showStatusMessage(error, Paint.valueOf("#f8902f"));
         errorLogLock.lock();
         try
         {
@@ -178,13 +162,14 @@ public class Controller
         errorLogLock.unlock();
     }
 
-    public void showStatusMessage(String error, Paint paint)
+    public void showStatusMessage(String message, Paint paint)
     {
         if (statusMessage != null)
         {
             statusMessage.setFill(paint);
+            statusMessage.setText(message);
+            statusMessage.setVisible(true);
         }
-        showStatusMessage(error);
     }
 
     //Modified source https://gist.github.com/jonyfs/b279b5e052c3b6893a092fed79aa7fbe#file-javafxtrayiconsample-java-L86
