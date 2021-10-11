@@ -1,4 +1,4 @@
-## Server for project (server for client-sender/old client-viewer)
+## Server for project
 
 ### The other parts of this project:
 - Web-app server: https://github.com/OniongRu/ServerCOUP
